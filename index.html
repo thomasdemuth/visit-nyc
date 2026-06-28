@@ -1,0 +1,2169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Visit NYC – The Subway Board Game</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff;overflow:hidden;user-select:none;height:100vh}
+
+.screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;transition:opacity .3s}
+.screen.hidden{opacity:0;pointer-events:none}
+
+/* ── WELCOME ── */
+#welcome{background:linear-gradient(160deg,#0a0a12 0%,#0d1a3a 60%,#001a4d 100%);flex-direction:column;gap:28px;z-index:10}
+.logo h1{font-size:64px;font-weight:900;letter-spacing:-2px;line-height:1;text-align:center}
+.logo h1 .nyc{color:#EE352E;font-style:italic}
+.logo sub{color:#FCCC0A;font-size:18px;letter-spacing:4px;text-transform:uppercase;margin-top:4px;display:block;text-align:center}
+.subway-stripe{display:flex;gap:6px;justify-content:center;margin:4px 0}
+.stripe{height:8px;border-radius:4px}
+.btn{padding:14px 48px;border:none;border-radius:8px;font-size:18px;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.btn-primary{background:#EE352E;color:#fff}
+.btn-secondary{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)}
+
+/* ── SETUP ── */
+#setup{background:#0a0a12;flex-direction:column;z-index:15}
+.setup-card{background:#111827;border-radius:16px;padding:32px;width:580px;max-width:95vw}
+.setup-card h2{font-size:22px;margin-bottom:22px;color:#FCCC0A;letter-spacing:1px;text-transform:uppercase}
+.field{margin-bottom:18px}
+.field label{display:block;font-size:11px;color:#aaa;margin-bottom:7px;text-transform:uppercase;letter-spacing:1px}
+.field input[type=text]{width:100%;padding:11px 14px;background:#1f2937;border:1px solid #374151;border-radius:8px;color:#fff;font-size:15px;outline:none}
+.field input:focus{border-color:#EE352E}
+.color-grid{display:flex;gap:10px;flex-wrap:wrap}
+.color-opt{width:34px;height:34px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:border-color .2s,transform .2s}
+.color-opt.selected{border-color:#fff;transform:scale(1.2)}
+.difficulty-row{display:flex;gap:10px}
+.diff-btn{flex:1;padding:11px;background:#1f2937;border:1px solid #374151;border-radius:8px;color:#aaa;cursor:pointer;font-size:13px;text-align:center;transition:all .2s}
+.diff-btn.selected{background:#EE352E;border-color:#EE352E;color:#fff;font-weight:700}
+.setup-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:8px}
+
+/* ── GAME LAYOUT ── */
+#game{flex-direction:column;align-items:stretch;padding:0;z-index:1;height:100vh}
+.game-main{display:flex;flex:1;overflow:hidden;min-height:0}
+
+/* ── SIDEBAR ── */
+#sidebar{width:260px;background:#0d1422;display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;border-right:1px solid #1f2937}
+#route-info{padding:14px;background:#0a1020;border-bottom:1px solid #1f2937}
+.route-box{font-size:12px;color:#aaa}
+.route-box strong{color:#FCCC0A}
+.route-inner{display:flex;gap:10px;align-items:flex-start}
+.route-card-thumb{width:46px;height:64px;border-radius:5px;object-fit:cover;border:2px solid #2d3a5c;flex-shrink:0}
+#players-list{padding:10px 12px;border-bottom:1px solid #1f2937;flex-shrink:0;box-sizing:border-box}
+.player-row{display:flex;align-items:center;gap:8px;padding:5px 7px;border-radius:7px;margin-bottom:3px;font-size:12px;background:#0d1422}
+.player-row.active{background:#1a2740;outline:1px solid #FCCC0A}
+.player-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.player-name{flex:1;font-weight:600;font-size:12px}
+.player-loc{color:#777;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:90px}
+.line-badge{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;font-weight:900;font-size:10px;vertical-align:middle;margin-right:2px}
+#deck-area{padding:10px 12px;border-bottom:1px solid #1f2937;display:flex;gap:10px;align-items:center}
+.mini-pile{position:relative;cursor:pointer;width:48px;height:66px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:transform .15s;gap:2px}
+.mini-pile:hover{transform:scale(1.08)}
+.pile-deck{background:#1a3a5c;border:2px solid #2563eb}
+.pile-disc{background:#2d1b1b;border:2px solid #EE352E}
+.pile-count{position:absolute;top:-6px;right:-6px;background:#374151;border-radius:10px;font-size:9px;padding:1px 4px;color:#fff}
+.pile-img{width:40px;height:56px;object-fit:cover;border-radius:3px}
+.pile-label{font-size:8px;color:#666;letter-spacing:.5px}
+#turn-info{padding:7px 12px;font-size:11px;color:#aaa;flex-shrink:0;border-bottom:1px solid #1f2937;line-height:1.5}
+#turn-info strong{color:#FCCC0A}
+#log{flex:1;overflow-y:auto;padding:7px 12px;font-size:11px;color:#666;line-height:1.6}
+#log .entry{padding:1px 0;border-bottom:1px solid #12192a}
+#log .hl{color:#FCCC0A}
+#log .good{color:#6CBE45}
+#log .bad{color:#EE352E}
+#log::-webkit-scrollbar{width:3px}
+#log::-webkit-scrollbar-thumb{background:#2a3448;border-radius:2px}
+#draw-hint{padding:8px 12px;font-size:11px;color:#555;border-top:1px solid #1f2937;flex-shrink:0}
+#draw-btns{display:flex;gap:6px;padding:6px 12px 10px;flex-shrink:0}
+#draw-btns button{flex:1;padding:7px;border:1px solid #374151;border-radius:6px;background:#1f2937;color:#ccc;cursor:pointer;font-size:11px;font-weight:600;transition:all .2s}
+#draw-btns button:hover{background:#2d3a4d;border-color:#FCCC0A;color:#FCCC0A}
+#draw-btns button:disabled{opacity:.35;cursor:not-allowed}
+
+/* ── BOARD AREA ── */
+#board-area{
+  flex:1;position:relative;overflow:hidden;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 50%, rgba(30,80,40,.18) 0%, transparent 70%),
+    repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(0,40,15,.07) 3px,rgba(0,40,15,.07) 6px),
+    linear-gradient(160deg,#0e2016 0%,#0a1810 50%,#06100a 100%);
+}
+#board-area>svg{position:absolute;inset:0;width:100%;height:100%}
+#trains-html-layer{position:absolute;inset:0;pointer-events:none;z-index:20}
+
+/* ── 3D TRAIN ── */
+.train-3d{
+  position:absolute;
+  transform:translate(-50%,-50%);
+  transition:left .75s cubic-bezier(.4,0,.2,1), top .75s cubic-bezier(.4,0,.2,1);
+  z-index:25;
+}
+.train-body{
+  width:36px;height:18px;
+  border-radius:7px 7px 4px 4px;
+  position:relative;
+  transform:perspective(140px) rotateX(30deg);
+  box-shadow:0 5px 12px rgba(0,0,0,.7), 0 2px 0 rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.25);
+}
+.train-body::before{
+  content:'';position:absolute;
+  top:4px;left:5px;right:5px;height:7px;
+  background:rgba(255,255,255,.18);border-radius:2px;
+}
+.train-body::after{
+  content:'';position:absolute;
+  bottom:-5px;left:7px;right:7px;height:5px;
+  background:rgba(0,0,0,.5);border-radius:50%;filter:blur(3px);
+}
+.train-init{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  font:900 8px 'Helvetica Neue',Arial;
+  color:rgba(255,255,255,.92);
+  text-shadow:0 1px 2px rgba(0,0,0,.6);
+  z-index:2;letter-spacing:-.5px;
+}
+.train-name-tag{
+  position:absolute;top:-14px;left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,.7);
+  color:#fff;font-size:7px;
+  padding:1px 4px;border-radius:3px;
+  white-space:nowrap;letter-spacing:.3px;
+}
+
+/* ── HAND STRIP (bottom, fanned) ── */
+#hand-strip{
+  height:158px;background:linear-gradient(to top,rgba(0,0,0,.92) 0%,rgba(0,0,0,.6) 70%,transparent 100%);
+  display:flex;align-items:flex-end;justify-content:center;
+  padding-bottom:14px;flex-shrink:0;position:relative;z-index:30;
+}
+#hand-inner{
+  position:relative;display:flex;align-items:flex-end;justify-content:center;
+  padding:0 20px;
+}
+.hand-card{
+  position:relative;width:74px;height:102px;
+  border-radius:8px;cursor:pointer;
+  margin:0 -16px;
+  transform-origin:bottom center;
+  transition:transform .22s cubic-bezier(.2,0,.2,1),box-shadow .22s;
+  border:2px solid transparent;
+  flex-shrink:0;
+}
+.hand-card img{width:100%;height:100%;object-fit:cover;border-radius:6px;transform:rotate(180deg);display:block}
+.hand-card.selected{border-color:#FCCC0A !important;box-shadow:0 0 18px rgba(252,204,10,.5) !important}
+.hand-card-fallback{
+  width:100%;height:100%;border-radius:6px;background:#1a3a5c;border:1px solid #2d5a8c;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;color:#aaa;text-align:center;padding:6px;
+}
+/* Card tooltip */
+.card-tip{
+  position:absolute;bottom:calc(100% + 12px);left:50%;
+  transform:translateX(-50%);
+  background:rgba(8,14,28,.96);color:#e0e0e0;
+  padding:8px 12px;border-radius:8px;
+  font-size:11px;white-space:nowrap;
+  pointer-events:none;opacity:0;
+  transition:opacity .18s;
+  border:1px solid rgba(255,255,255,.1);
+  z-index:200;line-height:1.6;min-width:170px;text-align:center;
+  box-shadow:0 4px 16px rgba(0,0,0,.6);
+}
+.card-tip strong{color:#FCCC0A;display:block;margin-bottom:2px;font-size:12px}
+.hand-card:hover .card-tip{opacity:1}
+.hand-card:hover{z-index:100 !important}
+
+/* ── ACTION BAR (below hand) ── */
+#action-bar{
+  display:flex;align-items:center;gap:10px;padding:0 20px 12px;
+  flex-shrink:0;background:rgba(0,0,0,.85);justify-content:center;
+  border-top:1px solid #1a2030;
+}
+#play-btn{
+  padding:10px 36px;background:#EE352E;color:#fff;
+  border:none;border-radius:8px;font-size:14px;font-weight:700;
+  cursor:pointer;transition:background .2s,transform .15s;
+}
+#play-btn:hover{background:#c0392b;transform:translateY(-1px)}
+#play-btn:disabled{background:#2d3748;cursor:not-allowed;color:#555;transform:none}
+#discard-btn{
+  padding:10px 20px;background:transparent;color:#666;
+  border:1px solid #2d3748;border-radius:8px;font-size:13px;
+  cursor:pointer;transition:all .2s;
+}
+#discard-btn:hover{border-color:#EE352E;color:#EE352E}
+#discard-btn:disabled{opacity:.3;cursor:not-allowed}
+
+/* ── MODAL ── */
+#modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:200}
+#modal-overlay.hidden{display:none}
+.modal{background:#111827;border-radius:16px;padding:26px;min-width:320px;max-width:520px;max-height:80vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.8)}
+.modal h3{font-size:18px;margin-bottom:12px;color:#FCCC0A}
+.modal p{font-size:13px;color:#aaa;margin-bottom:14px}
+.modal-options{display:flex;flex-direction:column;gap:7px}
+.modal-opt{padding:11px 14px;background:#1f2937;border:1px solid #374151;border-radius:8px;cursor:pointer;font-size:13px;color:#ddd;transition:all .15s;text-align:left}
+.modal-opt:hover{background:#2d3748;border-color:#FCCC0A;color:#fff}
+.modal-opt.disabled{opacity:.3;cursor:not-allowed;pointer-events:none}
+
+/* ── WIN ── */
+#win-screen{background:rgba(0,0,0,.92);flex-direction:column;gap:22px;text-align:center;z-index:300}
+#win-screen h2{font-size:46px;font-weight:900;color:#FCCC0A}
+#win-screen p{font-size:20px;color:#ccc}
+
+/* ── SETUP EXTENSIONS ── */
+.opp-count-row{display:flex;gap:8px;margin-top:2px}
+.opp-count-btn{width:40px;height:40px;border-radius:9px;background:#1f2937;border:1px solid #374151;color:#aaa;font-size:17px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.opp-count-btn.sel{background:#EE352E;border-color:#EE352E;color:#fff}
+.bots-section{margin-top:8px;display:flex;flex-direction:column;gap:8px}
+.bot-row{display:flex;align-items:center;gap:10px;background:#0d1422;border-radius:9px;padding:10px 12px;border:3px solid transparent;transition:border-color .35s,background .2s}
+.bot-swatch{width:22px;height:22px;border-radius:50%;flex-shrink:0;border:2px solid rgba(255,255,255,.2);transition:background .35s}
+.bot-label{font-size:10px;color:#555;letter-spacing:.5px;width:52px;flex-shrink:0}
+.bot-diff-wrap{display:flex;align-items:center;gap:8px;flex:1}
+.bot-diff-slider{flex:1;-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;background:#374151;outline:none;cursor:pointer}
+.bot-diff-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#EE352E;cursor:pointer;border:2px solid #fff}
+.bot-diff-slider::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#EE352E;cursor:pointer;border:2px solid #fff;border:none}
+.bot-diff-label{font-size:10px;color:#aaa;width:48px;text-align:right;flex-shrink:0;text-transform:uppercase;letter-spacing:.5px}
+
+/* ── SIDEBAR TRIM → TRANSPARENT OVERLAY ── */
+#sidebar{
+  width:210px!important;
+  position:absolute;left:0;top:0;bottom:0;
+  background:none!important;
+  border:none!important;
+  z-index:30;
+  pointer-events:none;
+}
+#sidebar>*{pointer-events:auto}
+#route-info{background:transparent!important;border:none!important}
+#deck-area,#turn-info,#draw-hint,#draw-btns{display:none!important}
+
+/* ── PLAYERS LIST → FLOATING BOTTOM-LEFT ── */
+/* ── PLAYERS + ZOOM — BOTTOM-LEFT CONTAINER ── */
+#bottom-left-ctrls{
+  position:absolute;bottom:20px;left:16px;
+  z-index:50;
+  display:flex;align-items:flex-end;gap:8px;
+  transition:transform .6s cubic-bezier(.34,0,.64,1),opacity .6s ease;
+}
+#bottom-left-ctrls.ui-hidden,#game-panel.ui-hidden,#bottom-wrap.ui-hidden{
+  transform:translateY(140px);
+  opacity:0;
+  pointer-events:none;
+}
+#players-list{
+  background:rgba(7,12,24,.82);
+  border-radius:10px;
+  padding:7px 9px;
+  border:1px solid rgba(255,255,255,.06)!important;
+  min-width:168px;
+}
+#players-list .player-row{background:transparent;margin-bottom:2px}
+
+/* ── BOTTOM WRAP — floats over board ── */
+#game{position:relative}
+#bottom-wrap{position:absolute;bottom:0;left:0;right:0;z-index:29;pointer-events:none;transition:transform .6s cubic-bezier(.34,0,.64,1),opacity .6s ease}
+#bottom-wrap>*{pointer-events:auto}
+#hand-strip{background:none!important;border:none!important}
+#action-bar{background:transparent!important;border-top:none!important}
+
+/* ── TURN BADGE: HIDDEN ── */
+#turn-badge{display:none!important}
+
+/* ── CARD COUNTS: HIDDEN ── */
+.bp-count{display:none!important}
+
+/* ── FLOATING GAME PANEL ── */
+#game-panel{position:absolute;bottom:16px;right:16px;z-index:50;display:flex;flex-direction:column;gap:8px;width:248px;transition:transform .6s cubic-bezier(.34,0,.64,1),opacity .6s ease}
+.panel-block{background:rgba(7,12,24,.94);border:1px solid #1a2840;border-radius:10px;overflow:hidden}
+
+/* chat row */
+#chat-row{display:flex;gap:8px;align-items:stretch}
+
+/* turn badge */
+#turn-badge{width:70px;flex-shrink:0;background:rgba(7,12,24,.94);border:1px solid #1a2840;border-radius:10px;padding:8px 5px;cursor:default;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-align:center}
+.tb-lbl{font-size:7px;color:#333;letter-spacing:.5px;text-transform:uppercase}
+.tb-dot{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,.2)}
+.tb-name{font-size:9px;color:#bbb;font-weight:700;max-width:62px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#turn-tooltip{position:absolute;bottom:calc(100% + 8px);right:0;background:rgba(7,12,24,.98);border:1px solid #1a2840;border-radius:10px;padding:10px;width:204px;opacity:0;pointer-events:none;transition:opacity .2s;font-size:10px;z-index:300}
+#turn-badge:hover #turn-tooltip{opacity:1}
+.tt-row{display:flex;align-items:center;gap:7px;padding:3px 0;border-bottom:1px solid #10192e}
+.tt-row:last-child{border:none}
+.tt-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.tt-info{flex:1;min-width:0}
+.tt-name{font-weight:700;color:#ccc;font-size:10px}
+.tt-loc{color:#444;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* chat panel */
+#chat-panel{flex:1;min-width:0}
+#chat-hdr{display:flex;align-items:center;padding:5px 8px;cursor:pointer;gap:5px;border-bottom:1px solid #1a2840;user-select:none}
+#chat-hdr-label{font-size:8px;color:#334;letter-spacing:1px;text-transform:uppercase;flex:1}
+#chat-toggle{font-size:9px;color:#334;transition:transform .28s}
+#chat-toggle.open{transform:rotate(180deg)}
+#log{max-height:80px;overflow-y:auto;padding:5px 8px 6px;font-size:10px;color:#555;line-height:1.55;transition:max-height .28s ease,padding .28s}
+#log.collapsed{max-height:0;padding:0 8px}
+#log .entry{padding:1px 0;border-bottom:1px solid #0d1424}
+#log .hl{color:#FCCC0A}
+#log .good{color:#6CBE45}
+#log .bad{color:#EE352E}
+#log::-webkit-scrollbar{width:2px}
+#log::-webkit-scrollbar-thumb{background:#1a2840;border-radius:1px}
+
+/* big piles */
+#deck-row{display:flex;gap:8px}
+.big-pile{flex:1;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;height:88px;border:2px solid;transition:transform .15s,box-shadow .15s;position:relative;background:rgba(7,12,24,.92)}
+.big-pile:hover{transform:scale(1.07);box-shadow:0 8px 22px rgba(0,0,0,.55)}
+.bp-deck{border-color:#2563eb}
+.bp-disc{border-color:#EE352E}
+.bp-icon{font-size:24px;line-height:1}
+.bp-top-img{width:46px;height:64px;object-fit:cover;border-radius:4px}
+.bp-lbl{font-size:7px;color:#444;letter-spacing:1.5px;margin-top:3px}
+.bp-count{position:absolute;top:-9px;right:-9px;background:#2d3748;border-radius:9px;font-size:9px;padding:1px 6px;color:#fff;font-weight:700}
+
+/* zoom controls */
+#zoom-ctrls{display:flex;flex-direction:column;gap:5px}
+.zoom-btn{width:32px;height:32px;border-radius:8px;background:rgba(7,12,24,.92);border:1px solid #1a2840;color:#888;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;transition:all .15s;line-height:1}
+.zoom-btn:hover{background:rgba(30,44,74,.95);color:#fff}
+
+/* ── INTRO OVERLAY ── */
+#intro-overlay{position:fixed;inset:0;z-index:120;background:rgba(0,0,0,.87);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px}
+#intro-overlay.hidden{display:none}
+.intro-fan{position:relative;width:380px;height:180px;flex-shrink:0}
+.fan-c{position:absolute;width:90px;height:124px;border-radius:9px;background:url('route back.png') center/cover no-repeat;border:2px solid #253a6a;left:50%;top:8px;transform-origin:center 100%;transform:translateX(-50%);transition:transform .65s cubic-bezier(.4,0,.2,1);box-shadow:0 8px 24px rgba(0,0,0,.65)}
+#intro-pick-prompt{position:absolute;top:-44px;left:50%;transform:translateX(-50%);color:#FCCC0A;font-size:15px;font-weight:700;letter-spacing:.04em;opacity:0;transition:opacity .4s;white-space:nowrap;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+#intro-pick-prompt.show{opacity:1}
+.intro-route-box{background:#0e1628;border:2px solid #FCCC0A;border-radius:14px;padding:22px 36px;text-align:center;opacity:0;transform:translateY(18px);transition:opacity .5s,transform .5s;min-width:280px}
+.intro-route-box.show{opacity:1;transform:none}
+.irb-lbl{font-size:9px;color:#444;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+.irb-start{font-size:20px;font-weight:800;color:#FCCC0A}
+.irb-arr{font-size:20px;color:#333;margin:4px 0}
+.irb-end{font-size:20px;font-weight:800;color:#EE352E}
+.irb-hint{font-size:10px;color:#444;margin-top:8px;font-style:italic}
+#intro-confirm-btn{position:fixed;bottom:36px;left:50%;transform:translateX(-50%) translateY(16px);padding:13px 40px;background:#EE352E;color:#fff;border:none;border-radius:9px;font-size:16px;font-weight:700;cursor:pointer;opacity:0;transition:opacity .45s,transform .45s;pointer-events:none;z-index:220}
+#intro-confirm-btn.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+#intro-confirm-btn:hover{background:#c0392b}
+/* Station reveal badges — absolutely positioned inside #board-area */
+.station-badge{position:absolute;transform:translateX(-50%);z-index:205;padding:10px 28px;border-radius:9px;font-size:22px;font-weight:900;letter-spacing:.09em;color:#fff;opacity:0;pointer-events:none;transition:opacity .35s ease,font-size .25s,padding .25s,border-radius .25s;white-space:nowrap;user-select:none;cursor:default}
+#badge-start{background:#18832e;box-shadow:0 3px 16px rgba(0,0,0,.6)}
+#badge-end{background:#c0392b;box-shadow:0 3px 16px rgba(0,0,0,.6)}
+.station-badge.visible{opacity:1;pointer-events:auto}
+.station-badge.visible:hover{font-size:28px;padding:12px 34px;border-radius:11px}
+/* Bottom legibility gradient */
+#board-area::after{content:'';position:absolute;bottom:0;left:0;right:0;height:220px;background:linear-gradient(to top,rgba(0,0,0,.72) 0%,rgba(0,0,0,.25) 45%,transparent 100%),radial-gradient(ellipse 65% 85% at 50% 100%,rgba(0,0,0,.8) 0%,rgba(0,0,0,.35) 40%,transparent 70%);pointer-events:none;z-index:25}
+
+
+/* flying deal card */
+.deal-fly{position:fixed;z-index:250;width:70px;height:98px;border-radius:8px;background:url('action card/Front@6x.png') center/cover no-repeat,linear-gradient(135deg,#2d4a8a,#1a2f5e);border:2px solid #253a6a;pointer-events:none;will-change:transform,opacity}
+</style>
+</head>
+<body>
+
+<!-- WELCOME -->
+<div id="welcome" class="screen">
+  <div class="logo">
+    <h1>Visit <span class="nyc">NYC</span></h1>
+    <sub>The Subway Board Game</sub>
+  </div>
+  <div class="subway-stripe" id="stripe-bar"></div>
+  <button class="btn btn-primary" onclick="showSetup()">New Game</button>
+  <p style="color:#444;font-size:12px">2 AI opponents &nbsp;·&nbsp; Desktop play</p>
+</div>
+
+<!-- SETUP -->
+<div id="setup" class="screen hidden">
+  <div class="setup-card">
+    <h2>Game Setup</h2>
+    <div class="field">
+      <label>Your Name</label>
+      <input type="text" id="player-name-input" placeholder="Enter your name" maxlength="18" value="Player 1">
+    </div>
+    <div class="field">
+      <label>Your Token Color</label>
+      <div class="color-grid" id="color-grid"></div>
+    </div>
+    <div class="field">
+      <label>Opponents</label>
+      <div class="opp-count-row" id="opp-count-row">
+        <div class="opp-count-btn" data-n="1" onclick="setOppCount(1)">1</div>
+        <div class="opp-count-btn sel" data-n="2" onclick="setOppCount(2)">2</div>
+        <div class="opp-count-btn" data-n="3" onclick="setOppCount(3)">3</div>
+        <div class="opp-count-btn" data-n="4" onclick="setOppCount(4)">4</div>
+      </div>
+    </div>
+    <div id="bots-section" class="bots-section"></div>
+    <div class="setup-actions">
+      <button class="btn btn-secondary" onclick="showScreen('welcome')">Back</button>
+      <button class="btn btn-primary" onclick="startGame()">Board the Train!</button>
+    </div>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game" class="screen hidden">
+  <div class="game-main">
+    <!-- SIDEBAR (route info only — gradient overlay) -->
+    <div id="sidebar">
+      <div id="route-info" style="display:none">
+        <div class="route-inner">
+          <img id="route-card-img" class="route-card-thumb" src="" onerror="this.style.display='none'">
+          <div class="route-box">
+            <div style="font-size:10px;color:#444;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Route Card</div>
+            <div>🚇 <strong id="r-start">—</strong></div>
+            <div style="color:#FCCC0A;line-height:1.2;font-size:18px">↓</div>
+            <div>🏁 <strong id="r-end">—</strong></div>
+            <div id="r-hint" style="margin-top:4px;font-size:10px;color:#555;font-style:italic"></div>
+          </div>
+        </div>
+      </div>
+      <!-- hidden btns kept for JS compatibility -->
+      <div id="deck-area" style="display:none"><span id="deck-count"></span><span id="disc-count"></span></div>
+      <div id="turn-info" style="display:none"></div>
+      <div id="draw-btns" style="display:none">
+        <button id="btn-draw-deck" onclick="drawFromDeck()">Draw Deck</button>
+        <button id="btn-draw-disc" onclick="drawFromDiscard()">Take Discard</button>
+      </div>
+    </div>
+
+    <!-- BOARD -->
+    <div id="board-area">
+      <div id="trains-html-layer"></div>
+      <div id="badge-start" class="station-badge">START</div>
+      <div id="badge-end" class="station-badge">END</div>
+
+      <!-- Players list + zoom — floating bottom-left -->
+      <div id="bottom-left-ctrls">
+        <div id="players-list"></div>
+        <div id="zoom-ctrls">
+          <button class="zoom-btn" title="Zoom in" onclick="doZoom(1/1.4)">+</button>
+          <button class="zoom-btn" title="Zoom out" onclick="doZoom(1.4)">−</button>
+          <button class="zoom-btn" title="Reset zoom" onclick="doZoom(0)" style="font-size:11px">⌂</button>
+        </div>
+      </div>
+
+      <!-- FLOATING GAME PANEL (bottom-right) -->
+      <div id="game-panel">
+        <div id="chat-row">
+          <!-- Collapsible log (full width, turn badge removed) -->
+          <div id="chat-panel" class="panel-block" style="width:100%">
+            <div id="chat-hdr" onclick="toggleChat()">
+              <span id="chat-hdr-label">Game Log</span>
+              <span id="chat-toggle" class="open">▲</span>
+            </div>
+            <div id="log"></div>
+          </div>
+        </div>
+        <!-- Big deck + discard -->
+        <div id="deck-row">
+          <div class="big-pile bp-deck" onclick="drawFromDeck()" title="Draw from deck">
+            <div id="bp-deck-icon" class="bp-icon"><img src="action card/Front@6x.png" style="width:44px;height:60px;object-fit:cover;border-radius:5px;" onerror="this.replaceWith(Object.assign(document.createTextNode('🃏')))"></div>
+            <div class="bp-lbl">DECK</div>
+          </div>
+          <div class="big-pile bp-disc" onclick="drawFromDiscard()" title="Take top discard">
+            <div id="bp-disc-icon" class="bp-icon">↩</div>
+            <div class="bp-lbl">DISCARD</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- hidden turn badge elements kept for JS compatibility -->
+      <div id="turn-badge" style="display:none">
+        <div class="tb-dot" id="tb-dot"></div>
+        <div class="tb-name" id="tb-name">—</div>
+        <div id="turn-tooltip"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- BOTTOM GRADIENT WRAP -->
+  <div id="bottom-wrap">
+    <div id="hand-strip">
+      <div id="hand-inner"></div>
+    </div>
+    <div id="action-bar">
+      <button id="discard-btn" onclick="discardSelected()" disabled>Discard Card</button>
+      <button id="play-btn" onclick="playSelected()" disabled>Select a card</button>
+    </div>
+  </div>
+</div>
+
+<!-- INTRO OVERLAY (just the fan) -->
+<div id="intro-overlay" class="hidden">
+  <div class="intro-fan" id="intro-fan"></div>
+</div>
+<button id="intro-confirm-btn" onclick="confirmRoute()">Confirm Route</button>
+
+<!-- MODAL -->
+<div id="modal-overlay" class="hidden">
+  <div class="modal">
+    <h3 id="modal-title">Choose</h3>
+    <p id="modal-desc"></p>
+    <div id="modal-options" class="modal-options"></div>
+  </div>
+</div>
+
+<!-- WIN -->
+<div id="win-screen" class="screen hidden">
+  <div style="font-size:72px" id="win-emoji">🏆</div>
+  <h2 id="win-title">You Win!</h2>
+  <p id="win-desc"></p>
+  <button class="btn btn-primary" onclick="showScreen('welcome')" style="margin-top:12px">Play Again</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// LINE META
+// ═══════════════════════════════════════════════════════════════
+const LINE_META = {
+  '1':{color:'#EE352E',text:'#fff'},'2':{color:'#EE352E',text:'#fff'},'3':{color:'#EE352E',text:'#fff'},
+  '4':{color:'#00933C',text:'#fff'},'5':{color:'#00933C',text:'#fff'},'6':{color:'#00933C',text:'#fff'},
+  '7':{color:'#B933AD',text:'#fff'},
+  'A':{color:'#0039A6',text:'#fff'},'C':{color:'#0039A6',text:'#fff'},'E':{color:'#0039A6',text:'#fff'},
+  'B':{color:'#FF6319',text:'#fff'},'D':{color:'#FF6319',text:'#fff'},'F':{color:'#FF6319',text:'#fff'},'M':{color:'#FF6319',text:'#fff'},
+  'G':{color:'#6CBE45',text:'#000'},
+  'J':{color:'#996633',text:'#fff'},'Z':{color:'#996633',text:'#fff'},
+  'L':{color:'#A7A9AC',text:'#000'},
+  'N':{color:'#FCCC0A',text:'#000'},'Q':{color:'#FCCC0A',text:'#000'},'R':{color:'#FCCC0A',text:'#000'},'W':{color:'#FCCC0A',text:'#000'},
+  'S':{color:'#808183',text:'#fff'}
+};
+
+// ═══════════════════════════════════════════════════════════════
+// SVG MAP DATA  (coordinate space: 3224.945 × 3002.328)
+// ═══════════════════════════════════════════════════════════════
+const SVG_W = 3224.945, SVG_H = 3002.328;
+
+// Maps game line letter → SVG stroke color in Illustrator file
+const LINE_SVG_COLORS = {
+  '1':'#e93437','2':'#e93437','3':'#e93437',
+  '4':'#009150','5':'#009150','6':'#009150',
+  '7':'#9f378b',
+  'A':'#147cc1','C':'#147cc1','E':'#147cc1',
+  'B':'#f58320','D':'#f58320','F':'#f58320','M':'#f58320',
+  'G':'#7ec243',
+  'J':'#b0752b','Z':'#b0752b',
+  'L':'#959594',
+  'N':'#fed419','Q':'#fed419','R':'#fed419','W':'#fed419',
+  'S':'#6a6c6c',
+};
+
+// Station positions in SVG viewBox units (3224 × 3002 space)
+const SVG_STATIONS = {
+  'New Jersey':                    {x: 960, y:1480},
+  // Bronx termini
+  'Van Cortlandt Park-242 St':     {x:1137, y:757},
+  'Wakefield-241 St':              {x:1534, y:752},
+  'Woodlawn':                      {x:1386, y:768},
+  'Eastchester-Dyre Av':           {x:1634, y:756},
+  'Pelham Bay Park':               {x:1756, y:758},
+  'Norwood-205 St':                {x:1439, y:768},
+  'Inwood-207 St':                 {x:1045, y:856},
+  // Queens termini
+  'Flushing-Main St':              {x:1814, y:1109},
+  'Astoria-Ditmars Blvd':          {x:1630, y:1136},
+  'Jamaica Center':                {x:2219, y:1259},
+  'Jamaica-179 St':                {x:2166, y:1161},
+  'Forest Hills-71 Av':            {x:2017, y:1217},
+  'Howard Beach-JFK Airport':      {x:2261, y:1274},
+  'Middle Village-Metropolitan Av':{x:1851, y:1441},
+  // Brooklyn termini
+  'Coney Island-Stillwell Av':     {x:1929, y:2101},
+  'Bay Ridge-95 St':               {x:1732, y:2164},
+  'Canarsie-Rockaway Pkwy':        {x:2135, y:1808},
+  'Ozone Park-Lefferts Blvd':      {x:2234, y:1480},
+  'Flatbush Av-Brooklyn College':  {x:2022, y:2036},
+  // Bronx major interchanges
+  '161 St-Yankee Stadium':         {x:1500, y: 980},
+  '149 St-Grand Concourse':        {x:1400, y:1040},
+  '125 St Bronx':                  {x:1360, y:1100},
+  // Upper Manhattan west (1/A/B/C/D corridor)
+  '168 St':                        {x:1064, y:1222},
+  '145 St':                        {x:1162, y:1049},
+  '125 St':                        {x:1120, y:1280},
+  '96 St':                         {x:1160, y:1340},
+  '72 St':                         {x:1175, y:1375},
+  '59 St-Columbus Circle':         {x:1180, y:1405},
+  // Lex corridor
+  '59 St-Lex':                     {x:1784, y:1360},
+  'Grand Central-42 St':           {x:1720, y:1395},
+  // Midtown
+  'Times Sq-42 St':                {x:1598, y:1398},
+  '34 St-Penn Station':            {x:1598, y:1460},
+  '34 St-Herald Sq':               {x:1640, y:1460},
+  '34 St-Hudson Yards':            {x:1069, y:1503},
+  '5 Av-Bryant Park':              {x:1680, y:1398},
+  // 14th St
+  '14 St-8 Av':                    {x:1155, y:1572},
+  '14 St':                         {x:1640, y:1548},
+  '14 St-Union Sq':                {x:1700, y:1565},
+  // Village / downtown Manhattan
+  'W 4 St':                        {x:1595, y:1620},
+  'Broadway-Lafayette':            {x:1640, y:1630},
+  'Canal St':                      {x:1595, y:1660},
+  'Chambers St':                   {x:1595, y:1700},
+  'World Trade Center':            {x:1314, y:1711},
+  'Fulton St':                     {x:1620, y:1730},
+  'South Ferry':                   {x:1297, y:1839},
+  'Whitehall St':                  {x:1338, y:1902},
+  'Broad St':                      {x:1432, y:1819},
+  // Queens interchanges
+  'Queensboro Plaza':              {x:1690, y:1280},
+  'Jackson Hts-Roosevelt Av':      {x:1900, y:1280},
+  '74 St-Broadway':                {x:1920, y:1300},
+  'Court Sq':                      {x:1590, y:1370},
+  // Brooklyn
+  'High St':                       {x:1490, y:1770},
+  'Jay St-MetroTech':              {x:1646, y:1784},
+  'Atlantic Av-Barclays':          {x:1501, y:1591},
+  'Bergen St':                     {x:1530, y:1690},
+  'Eastern Pkwy':                  {x:1600, y:1760},
+  'Franklin Av':                   {x:1795, y:1797},
+  'Church Av':                     {x:1795, y:1987},
+  'Crown Heights-Utica Av':        {x:1930, y:1826},
+  'New Lots Av':                   {x:2126, y:1687},
+  'Broadway Junction':             {x:1849, y:1846},
+  'Euclid Av':                     {x:2114, y:1595},
+  'New Utrecht Av':                {x:1639, y:1779},
+  '96 St-Q':                       {x:1640, y:1280},
+  // Additional game stations
+  'Prospect Park':                 {x:1895, y:1969},
+  'Parkchester':                   {x:1670, y:869},
+  'Bklyn Brg-City Hall':           {x:1412, y:1718},
+  'East Side-2 Av':                {x:1500, y:1633},
+  'South Bronx':                   {x:1469, y:1039},
+};
+
+const ROUTE_CARDS = [
+  // Each entry: {img, startLabel, endLabel, startStation, endStation}
+  // startStation/endStation are keys into SVG_STATIONS
+  {img:'route card/Artboard 1@6x.png',  startLabel:'Van Cortlandt',    endLabel:'Bay Ridge',         startStation:'Van Cortlandt Park-242 St', endStation:'Bay Ridge-95 St'},
+  {img:'route card/Artboard 2@6x.png',  startLabel:'Wakefield',        endLabel:'Prospect Park',     startStation:'Wakefield-241 St',          endStation:'Prospect Park'},
+  {img:'route card/Artboard 3@6x.png',  startLabel:'Jay St MetroTech', endLabel:'Van Cortlandt',     startStation:'Jay St-MetroTech',          endStation:'Van Cortlandt Park-242 St'},
+  {img:'route card/Artboard 4@6x.png',  startLabel:'South Ferry',      endLabel:'Jamaica Center',    startStation:'South Ferry',               endStation:'Jamaica Center'},
+  {img:'route card/Artboard 5@6x.png',  startLabel:'Parkchester',      endLabel:'World Trade Ctr',   startStation:'Parkchester',               endStation:'World Trade Center'},
+  {img:'route card/Artboard 6@6x.png',  startLabel:'Van Cortlandt',    endLabel:'Bklyn Brg City Hall',startStation:'Van Cortlandt Park-242 St',endStation:'Bklyn Brg-City Hall'},
+  {img:'route card/Artboard 7@6x.png',  startLabel:'Van Cortlandt',    endLabel:'East Side 2 Av',    startStation:'Van Cortlandt Park-242 St', endStation:'East Side-2 Av'},
+  {img:'route card/Artboard 8@6x.png',  startLabel:'South Ferry',      endLabel:'Jamaica Center',    startStation:'South Ferry',               endStation:'Jamaica Center'},
+  {img:'route card/Artboard 9@6x.png',  startLabel:'Inwood',           endLabel:'Jamaica 179 St',    startStation:'Inwood-207 St',             endStation:'Jamaica-179 St'},
+  {img:'route card/Artboard 10@6x.png', startLabel:'Coney Island',     endLabel:'Hudson Yards',      startStation:'Coney Island-Stillwell Av', endStation:'34 St-Hudson Yards'},
+  {img:'route card/Artboard 11@6x.png', startLabel:'145 St',           endLabel:'New Lots',          startStation:'145 St',                   endStation:'New Lots Av'},
+  {img:'route card/Artboard 12@6x.png', startLabel:'Inwood',           endLabel:'Crown Heights',     startStation:'Inwood-207 St',             endStation:'Crown Heights-Utica Av'},
+  {img:'route card/Artboard 13@6x.png', startLabel:'Prospect Park',    endLabel:'Middle Village',    startStation:'Prospect Park',             endStation:'Middle Village-Metropolitan Av'},
+  {img:'route card/Artboard 14@6x.png', startLabel:'Coney Island',     endLabel:'Inwood',            startStation:'Coney Island-Stillwell Av', endStation:'Inwood-207 St'},
+  {img:'route card/Artboard 15@6x.png', startLabel:'Inwood',           endLabel:'Church Av',         startStation:'Inwood-207 St',             endStation:'Church Av'},
+  {img:'route card/Artboard 16@6x.png', startLabel:'Bay Ridge',        endLabel:'Inwood',            startStation:'Bay Ridge-95 St',           endStation:'Inwood-207 St'},
+  {img:'route card/Artboard 17@6x.png', startLabel:'Inwood',           endLabel:'Prospect Park',     startStation:'Inwood-207 St',             endStation:'Prospect Park'},
+  {img:'route card/Artboard 18@6x.png', startLabel:'Woodlawn',         endLabel:'Prospect Park',     startStation:'Woodlawn',                  endStation:'Prospect Park'},
+  {img:'route card/Artboard 19@6x.png', startLabel:'South Bronx',      endLabel:'Bay Ridge',         startStation:'South Bronx',               endStation:'Bay Ridge-95 St'},
+  {img:'route card/Artboard 20@6x.png', startLabel:'Norwood',          endLabel:'Church Av',         startStation:'Norwood-205 St',            endStation:'Church Av'},
+  {img:'route card/Artboard 21@6x.png', startLabel:'Coney Island',     endLabel:'Flushing',          startStation:'Coney Island-Stillwell Av', endStation:'Flushing-Main St'},
+  {img:'route card/Artboard 22@6x.png', startLabel:'Norwood',          endLabel:'Middle Village',    startStation:'Norwood-205 St',            endStation:'Middle Village-Metropolitan Av'},
+  {img:'route card/Artboard 23@6x.png', startLabel:'Coney Island',     endLabel:'Crown Heights',     startStation:'Coney Island-Stillwell Av', endStation:'Crown Heights-Utica Av'},
+  {img:'route card/Artboard 24@6x.png', startLabel:'Norwood',          endLabel:'New Lots',          startStation:'Norwood-205 St',            endStation:'New Lots Av'},
+  {img:'route card/Artboard 25@6x.png', startLabel:'Hudson Yards',     endLabel:'Canarsie',          startStation:'34 St-Hudson Yards',        endStation:'Canarsie-Rockaway Pkwy'},
+  {img:'route card/Artboard 26@6x.png', startLabel:'Bay Ridge',        endLabel:'Jamaica 179 St',    startStation:'Bay Ridge-95 St',           endStation:'Jamaica-179 St'},
+  {img:'route card/Artboard 27@6x.png', startLabel:'Woodlawn',         endLabel:'Franklin Av',       startStation:'Woodlawn',                  endStation:'Franklin Av'},
+  {img:'route card/Artboard 28@6x.png', startLabel:'Woodlawn',         endLabel:'Canarsie',          startStation:'Woodlawn',                  endStation:'Canarsie-Rockaway Pkwy'},
+  {img:'route card/Artboard 29@6x.png', startLabel:'Canarsie',         endLabel:'Wakefield',         startStation:'Canarsie-Rockaway Pkwy',    endStation:'Wakefield-241 St'},
+  {img:'route card/Artboard 30@6x.png', startLabel:'Pelham Bay Park',  endLabel:'Canarsie',          startStation:'Pelham Bay Park',           endStation:'Canarsie-Rockaway Pkwy'},
+  {img:'route card/Artboard 31@6x.png', startLabel:'Canarsie',         endLabel:'Norwood',           startStation:'Canarsie-Rockaway Pkwy',    endStation:'Norwood-205 St'},
+  {img:'route card/Artboard 32@6x.png', startLabel:'145 St',           endLabel:'Ozone Park',        startStation:'145 St',                   endStation:'Ozone Park-Lefferts Blvd'},
+  {img:'route card/Artboard 33@6x.png', startLabel:'Jamaica 179 St',   endLabel:'Prospect Park',     startStation:'Jamaica-179 St',            endStation:'Prospect Park'},
+  {img:'route card/Artboard 34@6x.png', startLabel:'Flatbush',         endLabel:'Ditmars Blvd',      startStation:'Flatbush Av-Brooklyn College',endStation:'Astoria-Ditmars Blvd'},
+  {img:'route card/Artboard 35@6x.png', startLabel:'Euclid Av',        endLabel:'Ditmars Blvd',      startStation:'Euclid Av',                 endStation:'Astoria-Ditmars Blvd'},
+  {img:'route card/Artboard 36@6x.png', startLabel:'Flatbush',         endLabel:'Eastchester',       startStation:'Flatbush Av-Brooklyn College',endStation:'Eastchester-Dyre Av'},
+  {img:'route card/Artboard 37@6x.png', startLabel:'Flushing',         endLabel:'Crown Heights',     startStation:'Flushing-Main St',          endStation:'Crown Heights-Utica Av'},
+  {img:'route card/Artboard 38@6x.png', startLabel:'145 St',           endLabel:'Crown Heights',     startStation:'145 St',                   endStation:'Crown Heights-Utica Av'},
+  {img:'route card/Artboard 39@6x.png', startLabel:'Flushing',         endLabel:'Canarsie',          startStation:'Flushing-Main St',          endStation:'Canarsie-Rockaway Pkwy'},
+  {img:'route card/Artboard 40@6x.png', startLabel:'Jamaica Center',   endLabel:'Bay Ridge',         startStation:'Jamaica Center',            endStation:'Bay Ridge-95 St'},
+  {img:'route card/Artboard 41@6x.png', startLabel:'Ozone Park',       endLabel:'Bay Ridge',         startStation:'Ozone Park-Lefferts Blvd',  endStation:'Bay Ridge-95 St'},
+  {img:'route card/Artboard 42@6x.png', startLabel:'Woodlawn',         endLabel:'Euclid Av',         startStation:'Woodlawn',                  endStation:'Euclid Av'},
+  {img:'route card/Artboard 43@6x.png', startLabel:'Flushing',         endLabel:'Euclid Av',         startStation:'Flushing-Main St',          endStation:'Euclid Av'},
+  {img:'route card/Artboard 44@6x.png', startLabel:'Euclid Av',        endLabel:'Norwood',           startStation:'Euclid Av',                 endStation:'Norwood-205 St'},
+  {img:'route card/Artboard 45@6x.png', startLabel:'Pelham Bay Park',  endLabel:'Euclid Av',         startStation:'Pelham Bay Park',           endStation:'Euclid Av'},
+  {img:'route card/Artboard 46@6x.png', startLabel:'South Bronx',      endLabel:'Church Av',         startStation:'South Bronx',               endStation:'Church Av'},
+  {img:'route card/Artboard 47@6x.png', startLabel:'South Bronx',      endLabel:'Ozone Park',        startStation:'South Bronx',               endStation:'Ozone Park-Lefferts Blvd'},
+  {img:'route card/Artboard 48@6x.png', startLabel:'Pelham Bay Park',  endLabel:'East Side 2 Av',    startStation:'Pelham Bay Park',           endStation:'East Side-2 Av'},
+  {img:'route card/Artboard 49@6x.png', startLabel:'East Side 2 Av',   endLabel:'Eastchester',       startStation:'East Side-2 Av',            endStation:'Eastchester-Dyre Av'},
+  {img:'route card/Artboard 50@6x.png', startLabel:'Wakefield',        endLabel:'Church Av',         startStation:'Wakefield-241 St',          endStation:'Church Av'},
+  {img:'route card/Artboard 51@6x.png', startLabel:'Eastchester',      endLabel:'Euclid Av',         startStation:'Eastchester-Dyre Av',       endStation:'Euclid Av'},
+  {img:'route card/Artboard 52@6x.png', startLabel:'Eastchester',      endLabel:'New Lots',          startStation:'Eastchester-Dyre Av',       endStation:'New Lots Av'},
+  {img:'route card/Artboard 53@6x.png', startLabel:'Forest Hills',     endLabel:'Broad St',          startStation:'Forest Hills-71 Av',        endStation:'Broad St'},
+  {img:'route card/Artboard 54@6x.png', startLabel:'Norwood',          endLabel:'Broad St',          startStation:'Norwood-205 St',            endStation:'Broad St'},
+  {img:'route card/Artboard 55@6x.png', startLabel:'South Ferry',      endLabel:'Parkchester',       startStation:'South Ferry',               endStation:'Parkchester'},
+  {img:'route card/Artboard 56@6x.png', startLabel:'Coney Island',     endLabel:'Hudson Yards',      startStation:'Coney Island-Stillwell Av', endStation:'34 St-Hudson Yards'},
+];
+
+let svgLinePathsByColor = {};
+
+// ═══════════════════════════════════════════════════════════════
+// SVG MAP BUILDER — fetches Illustrator SVG and embeds inline
+// ═══════════════════════════════════════════════════════════════
+async function buildSVGMap() {
+  svgLinePathsByColor = {};
+  const boardArea = document.getElementById('board-area');
+
+  // Remove any previously injected SVG
+  const existing = boardArea.querySelector('svg');
+  if(existing) existing.remove();
+
+  try {
+    const resp = await fetch('Visit NYC PRINT.svg');
+    const txt = await resp.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(txt, 'image/svg+xml');
+    const svgEl = doc.querySelector('svg');
+    svgEl.setAttribute('width', '100%');
+    svgEl.setAttribute('height', '100%');
+    svgEl.style.cssText = 'position:absolute;inset:0;';
+    svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+    // Tag colored line paths for disturbance control
+    svgEl.querySelectorAll('path[stroke]').forEach(p => {
+      const c = (p.getAttribute('stroke')||'').toLowerCase().trim();
+      if(c && c !== '#ffffff' && c !== '#fff' && c !== '#231f20' && c !== 'none' && c !== '') {
+        p.dataset.origColor = c;
+        p.classList.add('game-line');
+        if(!svgLinePathsByColor[c]) svgLinePathsByColor[c] = [];
+        svgLinePathsByColor[c].push(p);
+      }
+    });
+
+    boardArea.prepend(svgEl);
+
+    // Wait one frame so the browser lays out the SVG, then crop viewBox to content bounds
+    await new Promise(r => requestAnimationFrame(r));
+    try {
+      const bb = svgEl.getBBox();
+      if(bb.width > 0 && bb.height > 0) {
+        const p = 60;
+        svgEl.setAttribute('viewBox', `${bb.x-p} ${bb.y-p} ${bb.width+p*2} ${bb.height+p*2}`);
+      }
+    } catch(_) {}
+    // Save base viewBox for zoom reference
+    const finalVB = svgEl.getAttribute('viewBox').split(/[\s,]+/).map(Number);
+    baseVB = {x:finalVB[0], y:finalVB[1], w:finalVB[2], h:finalVB[3]};
+    initMapInteraction();
+    cacheTilePositions();
+
+  } catch(e) {
+    console.warn('SVG load failed:', e);
+    const fb = document.createElement('div');
+    fb.style.cssText = 'position:absolute;inset:0;background:#0a1a0f;display:flex;align-items:center;justify-content:center;color:#4a7a5a;font-size:18px;letter-spacing:2px;';
+    fb.textContent = 'NYC SUBWAY';
+    boardArea.prepend(fb);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SUBWAY GAME DATA
+// ═══════════════════════════════════════════════════════════════
+const LINES = {
+  '1':{stations:['Van Cortlandt Park-242 St','238 St','231 St','225 St','215 St','207 St','Dyckman St','191 St','181 St','168 St','157 St','145 St','137 St-City College','125 St','116 St','110 St','103 St','96 St','86 St','79 St','72 St','66 St-Lincoln Center','59 St-Columbus Circle','50 St','Times Sq-42 St','34 St-Penn Station','28 St','23 St','18 St','14 St-8 Av','Christopher St','Houston St','Canal St','Franklin St','Chambers St','WTC Cortlandt','Rector St','South Ferry']},
+  '2':{stations:['Wakefield-241 St','Nereid Av','233 St','225 St','White Plains Rd','Gun Hill Rd','Burke Av','Allerton Av','Pelham Pkwy','Bronx Park East','E 180 St','Freeman St','Simpson St','Intervale Av','Prospect Av','Jackson Av','3 Av-149 St','149 St-Grand Concourse','135 St','125 St','116 St','110 St','96 St','72 St','Times Sq-42 St','34 St-Penn Station','14 St','Chambers St','Fulton St','Wall St','Clark St','Bergen St','Grand Army Plaza','Eastern Pkwy','Franklin Av','President St','Church Av','Beverly Rd','Newkirk Avs','Av J','Kings Hwy','Av U','Bay Pkwy','Flatbush Av-Brooklyn College']},
+  '3':{stations:['Harlem-148 St','145 St','135 St','125 St','116 St','96 St','72 St','Times Sq-42 St','34 St-Penn Station','14 St','Chambers St','Fulton St','Wall St','Clark St','Bergen St','Grand Army Plaza','Eastern Pkwy','Franklin Av','Crown Heights-Utica Av','Saratoga Av','Rockaway Av','Junius St','New Lots Av']},
+  '4':{stations:['Woodlawn','Mosholu Pkwy','Norwood-205 St','Bedford Park Blvd','Kingsbridge Rd','Fordham Rd','182 St','Tremont Av','174 St','170 St','167 St','161 St-Yankee Stadium','149 St-Grand Concourse','138 St-Grand Concourse','125 St Bronx','86 St','77 St','68 St-Hunter College','59 St-Lex','51 St','Grand Central-42 St','33 St','28 St','23 St','14 St-Union Sq','Astor Pl','Brooklyn Bridge-City Hall','Fulton St','Wall St','Borough Hall','Atlantic Av-Barclays','Franklin Av','Nostrand Av','Crown Heights-Utica Av','Sutter Av','Saratoga Av','Rockaway Av','New Lots Av']},
+  '5':{stations:['Eastchester-Dyre Av','Baychester Av','Gun Hill Rd','Burke Av','Allerton Av','Pelham Pkwy','Bronx Park East','E 180 St','149 St-Grand Concourse','138 St-Grand Concourse','125 St Bronx','86 St','68 St-Hunter College','59 St-Lex','Grand Central-42 St','23 St','14 St-Union Sq','Fulton St','Wall St','Borough Hall','Atlantic Av-Barclays','Franklin Av','Nostrand Av','Flatbush Av-Brooklyn College']},
+  '6':{stations:['Pelham Bay Park','Buhre Av','Middletown Rd','Westchester Sq','Castle Hill Av','Parkchester','Morrison Av','Elder Av','Hunts Point Av','Longwood Av','3 Av-149 St','125 St Bronx','116 St Bronx','110 St Bronx','103 St Bronx','96 St','86 St','77 St','68 St-Hunter College','59 St-Lex','51 St','Grand Central-42 St','33 St','28 St','23 St','14 St-Union Sq','Astor Pl','Bleecker St','Spring St','Canal St','Brooklyn Bridge-City Hall']},
+  '7':{stations:['Flushing-Main St','Mets-Willets Point','Murray Hill','Woodside-61 St','Jackson Hts-Roosevelt Av','74 St-Broadway','90 St-Elmhurst Av','Junction Blvd','103 St-Corona Plaza','Queensboro Plaza','Court Sq','5 Av-Bryant Park','Times Sq-42 St','34 St-Hudson Yards']},
+  'A':{stations:['Inwood-207 St','Dyckman St','190 St','181 St','175 St','168 St','163 St','155 St','145 St','135 St','125 St','116 St','110 St','103 St','96 St','86 St','81 St','72 St','59 St-Columbus Circle','50 St','Times Sq-42 St','34 St-Penn Station','23 St','14 St-8 Av','W 4 St','Spring St','Canal St','Chambers St','Fulton St','High St','Jay St-MetroTech','Hoyt-Schermerhorn','Nostrand Av','Kingston-Throop','Ralph Av','Rockaway Av','Broadway Junction','Alabama Av','Van Siclen Av','Cleveland St','Norwood Av','Crescent St','Cypress Hills','Ozone Park-Lefferts Blvd']},
+  'C':{stations:['168 St','163 St','155 St','145 St','135 St','125 St','116 St','110 St','103 St','96 St','86 St','81 St','72 St','59 St-Columbus Circle','50 St','Times Sq-42 St','34 St-Penn Station','23 St','14 St-8 Av','W 4 St','Spring St','Canal St','Chambers St','Fulton St','High St','Jay St-MetroTech','Hoyt-Schermerhorn','Nostrand Av','Kingston-Throop','Ralph Av','Rockaway Av','Broadway Junction','Euclid Av']},
+  'E':{stations:['Jamaica Center','Sutphin Blvd','Jamaica-Van Wyck','Kew Gardens-Union Tpke','Forest Hills-71 Av','75 Av','Jackson Hts-Roosevelt Av','74 St-Broadway','Court Sq','Lexington Av-53 St','5 Av-53 St','51 St','Times Sq-42 St','34 St-Penn Station','23 St','14 St-8 Av','W 4 St','Spring St','Canal St','Chambers St','World Trade Center']},
+  'B':{stations:['145 St','135 St','125 St','116 St','110 St','103 St','96 St','81 St','72 St','59 St-Columbus Circle','47-50 Sts','42 St-Bryant Park','34 St-Herald Sq','23 St','14 St','W 4 St','Broadway-Lafayette','Grand St','Atlantic Av-Barclays','Church Av','Beverly Rd','Newkirk Avs','Av J','Kings Hwy','Av U','Bay Pkwy','Coney Island-Stillwell Av']},
+  'D':{stations:['Norwood-205 St','Mosholu Pkwy','Bedford Park Blvd','Kingsbridge Rd','Fordham Rd','182 St','Tremont Av','170 St','167 St','161 St-Yankee Stadium','155 St','145 St','135 St','125 St','59 St-Columbus Circle','47-50 Sts','42 St-Bryant Park','34 St-Herald Sq','23 St','14 St','W 4 St','Broadway-Lafayette','Grand St','Atlantic Av-Barclays','Church Av','Kings Hwy','Bay Pkwy','Coney Island-Stillwell Av']},
+  'F':{stations:['Jamaica-179 St','169 St','Parsons Blvd','Sutphin Blvd','Briarwood','Kew Gardens-Union Tpke','Forest Hills-71 Av','75 Av','Jackson Hts-Roosevelt Av','74 St-Broadway','21 St-Queensbridge','Lexington Av-63 St','57 St','47-50 Sts','42 St-Bryant Park','34 St-Herald Sq','23 St','14 St','W 4 St','Broadway-Lafayette','Delancey-Essex','York St','Jay St-MetroTech','Bergen St','Carroll Gdns','Smith-9 Sts','4 Av-9 St','Prospect Av','25 St','Bay Ridge-4 Av','53 St','59 St-F','Fort Hamilton Pkwy','Bay Ridge-95 St']},
+  'M':{stations:['Forest Hills-71 Av','75 Av','Jackson Hts-Roosevelt Av','74 St-Broadway','Queens Plaza','Lexington Av-53 St','5 Av-53 St','47-50 Sts','42 St-Bryant Park','34 St-Herald Sq','23 St','14 St','W 4 St','Broadway-Lafayette','Delancey-Essex','Myrtle Av','Kosciuszko St','Gates Av','Wilson Av','Broadway Junction','Flushing Av-M','Metropolitan Av-M','Middle Village-Metropolitan Av']},
+  'G':{stations:['Court Sq','Court Sq-23 St','Queens Plaza','21 St-Queensbridge','Greenpoint Av','Nassau Av','Metropolitan Av-G','Broadway-G','Flushing Av-G','Myrtle-Willoughby','Bedford-Nostrand','Classon Av','Clinton-Washington','Fulton St-G','Bergen St','Carroll Gdns-G','Smith-9 Sts-G','4 Av-9 St-G','Church Av']},
+  'J':{stations:['Jamaica Center','Sutphin Blvd-J','121 St','111 St','104 St','Woodhaven Blvd-J','85 St-Forest Pkwy','75 St-Elderts Ln','Cypress Hills','Cleveland St','Norwood Av','Crescent St','Alabama Av','Van Siclen Av','Pennsylvania Av','Atlantic Av-J','Broadway Junction','Chauncey St','Halsey St','Gates Av-J','Kosciuszko St','Myrtle Av-J','Marcy Av','Hewes St','Lorimer St','Flushing Av-J','Broadway-J','Bowery','Canal St-J','Chambers St-J','Fulton St','Broad St']},
+  'L':{stations:['14 St-8 Av','6 Av-L','14 St-Union Sq','3 Av-L','1 Av','Bedford Av','Lorimer St-L','Graham Av','Grand St-L','Montrose Av','Morgan Av','Jefferson St','DeKalb Av-L','Myrtle-Wyckoff','Halsey St-L','Wilson Av-L','Bushwick Av','Atlantic Av-L','Sutter Av-Rutland','Livonia Av','New Lots Av-L','East 105 St','Canarsie-Rockaway Pkwy']},
+  'N':{stations:['Astoria-Ditmars Blvd','Astoria Blvd','Queensboro Plaza','Queens Plaza','36 Av','39 Av','Broadway-N','Lexington Av-59 St','5 Av-59 St','57 St-7 Av','49 St','Times Sq-42 St','34 St-Herald Sq','28 St-N','23 St-N','14 St-Union Sq','8 St-NYU','Canal St-N','City Hall-N','Cortlandt St-N','Rector St-N','Whitehall St','Bay Ridge-4 Av','53 St-N','59 St-N','Fort Hamilton Pkwy-N','New Utrecht Av','18 Av','20 Av','Bay Pkwy-N','Kings Hwy-N','Av U-N','86 St-N','Coney Island-Stillwell Av']},
+  'Q':{stations:['96 St-Q','86 St-Q','72 St-Q','57 St-7 Av','Times Sq-42 St','34 St-Herald Sq','28 St-Q','23 St-Q','14 St-Union Sq','8 St-NYU','Canal St-Q','DeKalb Av-Q','Atlantic Av-Barclays','Prospect Park','Church Av','Cortelyou Rd','Newkirk Avs-Q','Av H','Av J-Q','Av M','Kings Hwy-Q','Av U-Q','Sheepshead Bay','Brighton Beach','Ocean Pkwy','Coney Island-Stillwell Av']},
+  'R':{stations:['Forest Hills-71 Av','75 Av-R','67 Av','63 Dr-Rego Center','Woodhaven Blvd','Grand Av-Newtown','Elmhurst Av','Jackson Hts-Roosevelt Av','74 St-Broadway','Queens Plaza','Queensboro Plaza','Lexington Av-59 St','5 Av-59 St','57 St-7 Av','49 St-R','Times Sq-42 St','34 St-Herald Sq','28 St-R','23 St-R','14 St-Union Sq','8 St-NYU','Canal St-R','City Hall-R','Cortlandt St','Rector St-R','Whitehall St','South Ferry','Union St','Atlantic Av-Barclays','Court St','Jay St-MetroTech','DeKalb Av','Pacific St','Bay Ridge-4 Av','53 St-R','59 St-R','Fort Hamilton Pkwy-R','New Utrecht Av-R','18 Av-R','20 Av-R','Bay Pkwy-R','Kings Hwy-R','86 St-R','Bay Ridge-95 St']},
+  'W':{stations:['Astoria-Ditmars Blvd','Astoria Blvd-W','Queensboro Plaza','Queens Plaza-W','36 Av-W','39 Av-W','Broadway-W','Lexington Av-59 St','5 Av-59 St','57 St-7 Av','49 St-W','Times Sq-42 St','34 St-Herald Sq','28 St-W','23 St-W','14 St-Union Sq','8 St-NYU','Canal St-W','City Hall-W','Cortlandt St-W','Rector St-W','Whitehall St','South Ferry']},
+  'S':{stations:['Times Sq-42 St','Grand Central-42 St']},
+};
+
+const TRANSFER_LINES = {
+  'Times Sq-42 St':['1','2','3','7','A','C','E','N','Q','R','W','S'],
+  'Grand Central-42 St':['4','5','6','7','S'],
+  '125 St':['1','2','3','A','B','C','D'],
+  '145 St':['1','A','B','C','D'],
+  '168 St':['1','A','C'],
+  '59 St-Columbus Circle':['1','A','B','C','D'],
+  '34 St-Penn Station':['1','2','3','A','C','E'],
+  '34 St-Herald Sq':['B','D','F','M','N','Q','R','W'],
+  '14 St-8 Av':['A','C','E','L'],
+  '14 St-Union Sq':['4','5','6','L','N','Q','R','W'],
+  '14 St':['1','2','3','B','D','F','M'],
+  'Canal St':['1','A','C','E'],
+  'Chambers St':['1','2','3','A','C','E'],
+  'Fulton St':['2','3','4','5','A','C','J'],
+  'Atlantic Av-Barclays':['2','3','4','5','B','D','N','Q','R'],
+  'Jay St-MetroTech':['A','C','F','R'],
+  '149 St-Grand Concourse':['2','4','5'],
+  '125 St Bronx':['4','5','6'],
+  '59 St-Lex':['4','5','6'],
+  'Jackson Hts-Roosevelt Av':['7','E','F','M','N','R','W'],
+  '74 St-Broadway':['E','F','M','R'],
+  'Court Sq':['7','E','G','M'],
+  'Queensboro Plaza':['7','N','Q','R','W'],
+  'Forest Hills-71 Av':['E','F','M','R'],
+  'Jamaica Center':['A','J','E'],
+  'Broadway Junction':['A','C','J','L','M'],
+  'Franklin Av':['2','3','4','5','C'],
+  'Crown Heights-Utica Av':['3','4'],
+  '161 St-Yankee Stadium':['4','B','D'],
+  'Church Av':['2','B','Q'],
+  '57 St-7 Av':['N','Q','R','W'],
+  'W 4 St':['A','B','C','D','E','F','M'],
+  'Broadway-Lafayette':['B','D','F','M'],
+  'Whitehall St':['N','Q','R','W'],
+  'South Ferry':['1','R','W'],
+  'Broad St':['J','Z'],
+  'World Trade Center':['E'],
+  'Inwood-207 St':['A'],
+  'Van Cortlandt Park-242 St':['1'],
+  'Wakefield-241 St':['2'],
+  'Eastchester-Dyre Av':['5'],
+  'Pelham Bay Park':['6'],
+  'Woodlawn':['4'],
+  'Norwood-205 St':['D'],
+  'Jamaica-179 St':['F'],
+  'Flushing-Main St':['7'],
+  '34 St-Hudson Yards':['7'],
+  'High St':['A','C'],
+  'Euclid Av':['C'],
+  'Ozone Park-Lefferts Blvd':['A'],
+  'Howard Beach-JFK Airport':['A'],
+  'Middle Village-Metropolitan Av':['M'],
+  'Canarsie-Rockaway Pkwy':['L'],
+  'Bay Ridge-95 St':['R'],
+  'Coney Island-Stillwell Av':['D','F','N','Q'],
+  'New Lots Av':['3','4'],
+  'Flatbush Av-Brooklyn College':['2','5'],
+  'Astoria-Ditmars Blvd':['N','W'],
+  'Bergen St':['F','G'],
+};
+
+// ═══════════════════════════════════════════════════════════════
+// CARD DATA
+// ═══════════════════════════════════════════════════════════════
+const CARD_TIPS = {
+  '1 Stop':         'Move exactly 1 stop along your current line.',
+  '2 Stops':        'Move exactly 2 stops along your current line.',
+  '3 Stops':        'Move exactly 3 stops along your current line.',
+  '5 Stops':        'Move exactly 5 stops along your current line.',
+  'Metrocard':      'Enter the subway from NJ, or transfer to another line at your station.',
+  'Transfer':       'Force any player to switch lines at their current station.',
+  'Breakdown':      'Shuts down a line — no movement allowed until repaired.',
+  'Medical Emergency':'Disrupts a line — affected players skip their next move.',
+  'Delay':          'Slows a line — players move 1 fewer stop on that line.',
+  'Handyman':       'Repairs a Breakdown on any line.',
+  'Ambulance':      'Clears a Medical Emergency on any line.',
+  'Schedule':       'Fixes a Delay on any line.',
+};
+
+function buildDeck() {
+  const cards = [];
+  const add = (n,type,stops,img,label) => {
+    for(let i=0;i<n;i++) cards.push({type,stops,img,label,id:Math.random()});
+  };
+  add(7,'distance',1,'action card/1 stop@6x.png','1 Stop');
+  add(9,'distance',2,'action card/2 stops@6x.png','2 Stops');
+  add(9,'distance',3,'action card/3 stops@6x.png','3 Stops');
+  add(4,'distance',5,'action card/5 stops@6x.png','5 Stops');
+  add(18,'metrocard',0,'action card/metrocard@6x.png','Metrocard');
+  add(6,'transfer',0,'action card/transfer@6x.png','Transfer');
+  add(3,'disturbance',0,'action card/breakdown@6x.png','Breakdown');
+  add(3,'disturbance',0,'action card/medical@6x.png','Medical Emergency');
+  add(3,'disturbance',0,'action card/delay@6x.png','Delay');
+  add(6,'solution',0,'action card/handyman@6x.png','Handyman');
+  add(6,'solution',0,'action card/ambulance@6x.png','Ambulance');
+  add(6,'solution',0,'action card/schedule@6x.png','Schedule');
+  return shuffle(cards);
+}
+
+// ROUTE_CARDS defined earlier (line ~632)
+
+// ═══════════════════════════════════════════════════════════════
+// GAME STATE
+// ═══════════════════════════════════════════════════════════════
+let G = {};
+let selectedCard = null;
+let drawnThisTurn = false;
+let numOpponents = 2;
+let botSetups = [];
+let baseVB = null; // {x,y,w,h} saved after buildSVGMap for zoom reference
+let confirmRouteResolve = null;
+let tileCache = []; // [{cx, cy}] all station tile centers from SVG layer h
+
+function initGame(playerName, color, opponents) {
+  const route = ROUTE_CARDS[Math.floor(Math.random()*ROUTE_CARDS.length)];
+  const deck = buildDeck();
+  const mkP = (name,col,isAI,diff)=>({name,color:col,isAI,difficulty:diff||'easy',station:'New Jersey',line:null,dir:1,hand:[],metrocardPlayed:false,turnsWaited:0,skipMove:false});
+  const players = [
+    mkP(playerName, color, false, null),
+    ...opponents.map(o=>mkP(o.name, o.color, true, o.difficulty))
+  ];
+  // Don't deal cards here — intro animation deals them
+  const discard = [deck.pop()];
+  G = {players,deck,discard,route,currentPlayer:0,disturbances:{},log:[]};
+  drawnThisTurn = false; selectedCard = null;
+}
+
+function curP() { return G.players[G.currentPlayer]; }
+
+// ═══════════════════════════════════════════════════════════════
+// MOVEMENT
+// ═══════════════════════════════════════════════════════════════
+function getStations(lid) { return (LINES[lid]||{stations:[]}).stations; }
+function stationIdx(st, lid) { return getStations(lid).indexOf(st); }
+function canMove(lid) { const d=G.disturbances[lid]; return !d || d.type!=='breakdown'; }
+
+function movePlayer(player, stops) {
+  if(!player.line) return;
+  const sts = getStations(player.line);
+  let idx = sts.indexOf(player.station);
+  if(idx<0) return;
+  const dist = G.disturbances[player.line];
+  let actual = stops;
+  if(dist && dist.type==='delay') actual = Math.max(1, stops-1);
+  let ni = Math.max(0, Math.min(sts.length-1, idx + player.dir * actual));
+  player.station = sts[ni];
+}
+
+function stopsTo(player, dest) {
+  if(!player.line) return Infinity;
+  const sts = getStations(player.line);
+  const a = sts.indexOf(player.station), b = sts.indexOf(dest);
+  if(a<0||b<0) return Infinity;
+  return Math.abs(b-a);
+}
+
+function doTransfer(player, newLine, newDir) {
+  const sts = getStations(newLine);
+  const idx = sts.indexOf(player.station);
+  if(idx<0) {
+    // try to find matching name prefix
+    const close = sts.find(s=>s.startsWith(player.station.split('-')[0])) || sts[0];
+    player.station = close;
+  }
+  player.line = newLine;
+  player.dir = newDir;
+}
+
+function checkWin(p) { return p.station === G.route.endStation; }
+
+// ═══════════════════════════════════════════════════════════════
+// SOUND
+// ═══════════════════════════════════════════════════════════════
+let audioCtx;
+function getACtx() { if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)(); return audioCtx; }
+function beep(f,d=.1,v=.25,t='sine') {
+  try {
+    const ctx=getACtx(),o=ctx.createOscillator(),g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type=t; o.frequency.value=f;
+    g.gain.setValueAtTime(v,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+d);
+    o.start(ctx.currentTime); o.stop(ctx.currentTime+d);
+  }catch(e){}
+}
+function snd(n) {
+  switch(n){
+    case 'draw':    beep(440,.08,.18);break;
+    case 'play':    beep(520,.1,.2);setTimeout(()=>beep(660,.08,.18),75);break;
+    case 'move':    [200,260,320].forEach((f,i)=>setTimeout(()=>beep(f,.07,.14,'square'),i*55));break;
+    case 'transfer':beep(350,.08,.18);setTimeout(()=>beep(500,.12,.22),110);break;
+    case 'disturbance':beep(120,.35,.3,'sawtooth');break;
+    case 'solution':beep(660,.1,.2);setTimeout(()=>beep(880,.14,.22),100);break;
+    case 'win':     [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.28,.28),i*140));break;
+    case 'discard': beep(200,.09,.18);break;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════════
+function shuffle(arr) {
+  for(let i=arr.length-1;i>0;i--){const j=0|Math.random()*(i+1);[arr[i],arr[j]]=[arr[j],arr[i]];}
+  return arr;
+}
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+  const ids={welcome:'welcome',setup:'setup',game:'game','win-screen':'win-screen'};
+  document.getElementById(ids[id]||id).classList.remove('hidden');
+}
+function lb(l) {
+  const m=LINE_META[l]||{color:'#555',text:'#fff'};
+  return `<span class="line-badge" style="background:${m.color};color:${m.text}">${l}</span>`;
+}
+function addLog(msg,cls='') { G.log.unshift({msg,cls}); if(G.log.length>80)G.log.pop(); }
+
+function renderLog() {
+  document.getElementById('log').innerHTML=G.log.map(e=>`<div class="entry ${e.cls}">${e.msg}</div>`).join('');
+}
+
+function cacheTilePositions() {
+  tileCache = [];
+  const svgEl = document.querySelector('#board-area svg');
+  if(!svgEl) return;
+  const layer = svgEl.getElementById ? svgEl.getElementById('h') : svgEl.querySelector('#h');
+  if(!layer) return;
+  layer.children && Array.from(layer.children).forEach(el => {
+    try {
+      const bb = el.getBBox();
+      if(bb.width > 0 && bb.height > 0) {
+        tileCache.push({cx: bb.x + bb.width/2, cy: bb.y + bb.height/2});
+      }
+    } catch(_) {}
+  });
+}
+
+function snapToNearestTile(x, y) {
+  if(tileCache.length === 0) return {x, y};
+  let best = null, bestDist = Infinity;
+  for(const t of tileCache) {
+    const d = (t.cx - x)**2 + (t.cy - y)**2;
+    if(d < bestDist) { bestDist = d; best = t; }
+  }
+  return best ? {x: best.cx, y: best.cy} : {x, y};
+}
+
+function getSVGCoord(station) {
+  let base = SVG_STATIONS[station];
+  if(!base) {
+    const key = Object.keys(SVG_STATIONS).find(k=>k.startsWith(station.split('-')[0].split(' ').slice(0,2).join(' ')));
+    base = key ? SVG_STATIONS[key] : SVG_STATIONS['New Jersey'];
+  }
+  // Don't snap New Jersey — it's intentionally off-map
+  if(station === 'New Jersey' || tileCache.length === 0) return base;
+  return snapToNearestTile(base.x, base.y);
+}
+
+function renderTrains() {
+  const layer = document.getElementById('trains-html-layer');
+  const svgEl = document.querySelector('#board-area svg');
+  if(!svgEl) return;
+  const svgRect = svgEl.getBoundingClientRect();
+  const boardRect = document.getElementById('board-area').getBoundingClientRect();
+
+  // Parse the current viewBox (may be cropped from original after getBBox() crop)
+  const vbParts = (svgEl.getAttribute('viewBox') || `0 0 ${SVG_W} ${SVG_H}`).split(/[\s,]+/).map(Number);
+  const [vbX, vbY, vbW, vbH] = vbParts;
+
+  // "xMidYMid meet": uniform scale, centered, no cropping
+  const scale = Math.min(svgRect.width / vbW, svgRect.height / vbH);
+  const offsetX = (svgRect.width  - vbW * scale) / 2;
+  const offsetY = (svgRect.height - vbH * scale) / 2;
+  const offX = svgRect.left - boardRect.left;
+  const offY = svgRect.top  - boardRect.top;
+
+  // Group by station
+  const grp = {};
+  G.players.forEach((p,i)=>{ if(!grp[p.station])grp[p.station]=[]; grp[p.station].push(i); });
+  const clusterOff = [[[0,0]],[[-18,0],[18,0]],[[-18,10],[18,10],[0,-12]]];
+
+  G.players.forEach((p,i)=>{
+    let el = document.getElementById(`train-${i}`);
+    if(!el) {
+      el = document.createElement('div');
+      el.className = 'train-3d';
+      el.id = `train-${i}`;
+      const body = document.createElement('div');
+      body.className = 'train-body';
+      body.id = `train-body-${i}`;
+      const init = document.createElement('div');
+      init.className = 'train-init';
+      body.appendChild(init);
+      const tag = document.createElement('div');
+      tag.className = 'train-name-tag';
+      el.appendChild(tag);
+      el.appendChild(body);
+      layer.appendChild(el);
+    }
+    document.getElementById(`train-body-${i}`).style.background = p.color;
+    el.querySelector('.train-init').textContent = p.name[0].toUpperCase();
+    el.querySelector('.train-name-tag').textContent = p.name;
+
+    const coord = getSVGCoord(p.station);
+    const g = grp[p.station]||[i];
+    const pos = g.indexOf(i);
+    const ofs = (clusterOff[Math.min(g.length-1,2)]||[[0,0]])[pos]||[0,0];
+    el.style.left = (offX + offsetX + (coord.x - vbX) * scale + ofs[0]) + 'px';
+    el.style.top  = (offY + offsetY + (coord.y - vbY) * scale + ofs[1]) + 'px';
+  });
+}
+
+function renderDisturbances() {
+  // Reset all tagged line paths to original colors
+  document.querySelectorAll('#board-area svg .game-line').forEach(p => {
+    const orig = p.dataset.origColor;
+    if(orig) p.setAttribute('stroke', orig);
+    p.removeAttribute('stroke-dasharray');
+    p.style.opacity = '1';
+  });
+
+  // Apply active disturbances
+  Object.entries(G.disturbances).forEach(([lineId, d]) => {
+    const svgColor = LINE_SVG_COLORS[lineId];
+    if(!svgColor) return;
+    const paths = svgLinePathsByColor[svgColor] || [];
+    paths.forEach(p => {
+      p.setAttribute('stroke', '#3a3a3a');
+      p.setAttribute('stroke-dasharray', '12 6');
+      p.style.opacity = '0.4';
+    });
+  });
+}
+
+function renderPlayers() {
+  const el = document.getElementById('players-list');
+  el.innerHTML = G.players.map((p,i)=>{
+    const active = i===G.currentPlayer;
+    const lineInfo = p.line ? lb(p.line)+(p.dir>0?'↓':'↑') : '';
+    return `<div class="player-row ${active?'active':''}">
+      <div class="player-dot" style="background:${p.color}"></div>
+      <div style="flex:1;min-width:0">
+        <div class="player-name">${p.name}${p.isAI?' 🤖':''}</div>
+        <div class="player-loc">${p.station.slice(0,18)} ${lineInfo}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderHand() {
+  const p = G.players[0];
+  const wrap = document.getElementById('hand-inner');
+  wrap.innerHTML = '';
+  const n = p.hand.length;
+  if(n===0) return;
+  const FAN = Math.min(10, 60/n);
+  const maxA = FAN*(n-1)/2;
+  const isMyTurn = G.currentPlayer===0;
+
+  p.hand.forEach((card,i)=>{
+    const rot = -maxA + i*FAN;
+    const div = document.createElement('div');
+    div.className = 'hand-card'+(selectedCard===card?' selected':'');
+    div.style.transform = `rotate(${rot}deg)`;
+    div.style.zIndex = i;
+    div.dataset.rot = rot;
+
+    const img = document.createElement('img');
+    img.src = card.img;
+    img.onerror = ()=>{ div.innerHTML=`<div class="hand-card-fallback">${card.label}</div>`; addTip(div,card); };
+    div.appendChild(img);
+
+    // Tooltip
+    addTip(div, card);
+
+    if(isMyTurn && drawnThisTurn) {
+      div.onclick = ()=> selectCard(card, div, rot);
+    } else {
+      div.style.cursor = 'default';
+    }
+    div.onmouseenter = ()=>{
+      if(!div.classList.contains('selected'))
+        div.style.transform = `rotate(0deg) translateY(-42px)`;
+      div.style.zIndex = 150;
+    };
+    div.onmouseleave = ()=>{
+      if(!div.classList.contains('selected'))
+        div.style.transform = `rotate(${rot}deg)`;
+      div.style.zIndex = i;
+    };
+    wrap.appendChild(div);
+  });
+}
+
+function addTip(div, card) {
+  const tip = document.createElement('div');
+  tip.className = 'card-tip';
+  tip.innerHTML = `<strong>${card.label}</strong>${CARD_TIPS[card.label]||''}`;
+  div.appendChild(tip);
+}
+
+function renderDeck() {
+  // update big-pile counts
+  const bdc = document.getElementById('bp-deck-count');
+  const bdi = document.getElementById('bp-disc-count');
+  if(bdc) bdc.textContent = G.deck.length;
+  if(bdi) bdi.textContent = G.discard.length;
+  // also sync hidden sidebar spans (for any legacy code)
+  const dc = document.getElementById('deck-count'); if(dc) dc.textContent = G.deck.length;
+  const sc = document.getElementById('disc-count'); if(sc) sc.textContent = G.discard.length;
+  const top = G.discard[G.discard.length-1];
+  const wrap = document.getElementById('bp-disc-icon');
+  if(wrap && top) wrap.innerHTML=`<img class="bp-top-img" src="${top.img}" onerror="this.style.display='none'">`;
+  else if(wrap && !top) wrap.textContent='↩';
+}
+
+function renderRoute() {
+  document.getElementById('r-start').textContent = G.route.startLabel;
+  document.getElementById('r-end').textContent = G.route.endLabel;
+  const hint = document.getElementById('r-hint');
+  if(hint) hint.textContent = '';
+  const img = document.getElementById('route-card-img');
+  if(img) img.src = G.route.img;
+}
+
+function updateUI() {
+  const isMyTurn = G.currentPlayer===0;
+  const phase = drawnThisTurn ? 'play' : 'draw';
+  // update turn badge
+  const cp = curP();
+  const dot = document.getElementById('tb-dot');
+  const nm  = document.getElementById('tb-name');
+  if(dot) dot.style.background = cp.color;
+  if(nm)  nm.textContent = isMyTurn ? 'You' : cp.name;
+  // update tooltip
+  const tt = document.getElementById('turn-tooltip');
+  if(tt) {
+    tt.innerHTML = G.players.map(p=>{
+      const loc = p.line ? `${p.line} · ${p.station.slice(0,16)}` : p.station.slice(0,16);
+      return `<div class="tt-row">
+        <div class="tt-dot" style="background:${p.color}"></div>
+        <div class="tt-info">
+          <div class="tt-name">${p.name}${p===cp?' ▶':''}</div>
+          <div class="tt-loc">${loc}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  const playBtn = document.getElementById('play-btn');
+  const discBtn = document.getElementById('discard-btn');
+  if(isMyTurn && phase==='play') {
+    playBtn.disabled = !selectedCard;
+    playBtn.textContent = selectedCard ? `Play ${selectedCard.label}` : 'Select a card';
+    discBtn.disabled = !selectedCard;
+  } else {
+    playBtn.disabled = true;
+    playBtn.textContent = isMyTurn ? 'Draw first' : 'Not your turn';
+    discBtn.disabled = true;
+  }
+  // big piles clickable only on your turn / draw phase
+  const bpDeck = document.querySelector('.bp-deck');
+  const bpDisc = document.querySelector('.bp-disc');
+  if(bpDeck) bpDeck.style.opacity = (!isMyTurn||drawnThisTurn) ? '.45' : '1';
+  if(bpDisc) bpDisc.style.opacity = (!isMyTurn||drawnThisTurn||G.discard.length===0) ? '.45' : '1';
+  document.getElementById('btn-draw-deck').disabled = !isMyTurn || drawnThisTurn;
+  document.getElementById('btn-draw-disc').disabled = !isMyTurn || drawnThisTurn || G.discard.length===0;
+}
+
+function renderAll() {
+  renderPlayers();
+  renderHand();
+  renderDeck();
+  renderRoute();
+  renderTrains();
+  renderDisturbances();
+  renderLog();
+  updateUI();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════════════════════════
+function showModal(title, desc, opts) {
+  return new Promise(res=>{
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-desc').textContent = desc||'';
+    const oc = document.getElementById('modal-options');
+    oc.innerHTML = '';
+    opts.forEach(opt=>{
+      const b = document.createElement('div');
+      b.className = 'modal-opt'+(opt.disabled?' disabled':'');
+      b.innerHTML = opt.label;
+      if(!opt.disabled) b.onclick=()=>{ closeModal(); res(opt.value); };
+      oc.appendChild(b);
+    });
+    document.getElementById('modal-overlay').classList.remove('hidden');
+  });
+}
+function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); }
+
+// ═══════════════════════════════════════════════════════════════
+// CARD PLAY
+// ═══════════════════════════════════════════════════════════════
+function selectCard(card, div, rot) {
+  if(!drawnThisTurn || G.currentPlayer!==0) return;
+  selectedCard = selectedCard===card ? null : card;
+  document.querySelectorAll('.hand-card').forEach(c=>c.classList.remove('selected'));
+  if(selectedCard) {
+    div.classList.add('selected');
+    div.style.transform = `rotate(0deg) translateY(-42px)`;
+    div.style.zIndex = 150;
+  }
+  updateUI();
+}
+
+function drawFromDeck() {
+  if(G.currentPlayer!==0||drawnThisTurn) return;
+  if(G.deck.length===0) reshuffleDiscard();
+  if(G.deck.length===0) return;
+  const card = G.deck.pop();
+  G.players[0].hand.push(card);
+  snd('draw'); addLog('You drew a card.');
+  drawnThisTurn = true;
+  renderAll();
+}
+
+function drawFromDiscard() {
+  if(G.currentPlayer!==0||drawnThisTurn||G.discard.length===0) return;
+  const card = G.discard.pop();
+  G.players[0].hand.push(card);
+  snd('draw'); addLog(`You took the discard: <b>${card.label}</b>`);
+  drawnThisTurn = true;
+  renderAll();
+}
+
+function reshuffleDiscard() {
+  if(G.discard.length<2) return;
+  const top = G.discard.pop();
+  G.deck = shuffle([...G.discard]);
+  G.discard = [top];
+  addLog('Deck reshuffled.');
+}
+
+async function playSelected() {
+  if(!selectedCard||G.currentPlayer!==0||!drawnThisTurn) return;
+  const card = selectedCard; selectedCard=null;
+  await executeCard(card, G.players[0], true);
+}
+
+async function discardSelected() {
+  if(!selectedCard||G.currentPlayer!==0||!drawnThisTurn) return;
+  const card = selectedCard; selectedCard=null;
+  G.players[0].hand.splice(G.players[0].hand.indexOf(card),1);
+  G.discard.push(card);
+  snd('discard'); addLog(`You discarded ${card.label}.`);
+  renderAll();
+  endTurn();
+}
+
+async function executeCard(card, player, isHuman) {
+  const idx = player.hand.indexOf(card);
+  if(idx>=0) player.hand.splice(idx,1);
+
+  switch(card.type) {
+    case 'distance':    await playMove(card, player, isHuman); break;
+    case 'metrocard':   await playMetro(card, player, isHuman); break;
+    case 'transfer':    await playTransfer(card, player, isHuman); break;
+    case 'disturbance': await playDisturbance(card, player, isHuman); break;
+    case 'solution':    await playSolution(card, player, isHuman); break;
+    default: G.discard.push(card); snd('discard');
+  }
+
+  while(!isHuman && player.hand.length>5) G.discard.push(player.hand.shift());
+  if(isHuman && player.hand.length>5) await forceDiscard(player);
+
+  if(checkWin(player)) { triggerWin(player); return; }
+  endTurn();
+}
+
+async function playMove(card, player, isHuman) {
+  if(player.station==='New Jersey') { addLog(`${player.name}: play a Metrocard first.`); G.discard.push(card); return; }
+  if(!player.line) {
+    const lines = linesAt(player.station).filter(l=>LINES[l]);
+    if(isHuman && lines.length>0) {
+      const chosen = await showModal('Choose a Line',`Which line at ${player.station}?`, lines.map(l=>({label:lb(l)+' '+l+' train',value:l})));
+      player.line=chosen;
+      const sts=getStations(chosen);
+      player.dir = await showModal('Choose Direction',`Direction on the ${chosen}?`,[
+        {label:lb(chosen)+' Toward '+sts[sts.length-1],value:1},
+        {label:lb(chosen)+' Toward '+sts[0],value:-1}
+      ]);
+    } else { G.discard.push(card); return; }
+  }
+  if(!canMove(player.line)) {
+    addLog(`${player.name} is stuck! ${lb(player.line)} has a breakdown.`,'bad');
+    G.discard.push(card); return;
+  }
+  if(player.skipMove) {
+    player.skipMove=false;
+    addLog(`${player.name} skips move (Medical Emergency).`,'bad');
+    G.discard.push(card); return;
+  }
+  const prev=player.station;
+  movePlayer(player, card.stops);
+  addLog(`${player.name} moved ${card.stops} stop${card.stops>1?'s':''} → ${player.station}`,'hl');
+  snd('move'); G.discard.push(card);
+  renderTrains(); await sleep(500);
+}
+
+async function playMetro(card, player, isHuman) {
+  snd('transfer');
+  if(player.station==='New Jersey') {
+    player.station = G.route.startStation;
+    const lines = linesAt(G.route.startStation).filter(l=>LINES[l]);
+    if(isHuman && lines.length>0) {
+      if(lines.length===1) {
+        player.line = lines[0];
+      } else {
+        player.line = await showModal('Enter the Subway!',`Which line at ${G.route.startLabel}?`, lines.map(l=>({label:lb(l)+' '+l+' train',value:l})));
+      }
+      const sts=getStations(player.line);
+      const stn=player.station;
+      if(sts[0]===stn) {
+        player.dir=1;
+      } else if(sts[sts.length-1]===stn) {
+        player.dir=-1;
+      } else {
+        player.dir = await showModal('Choose Direction',`Heading on the ${player.line}?`,[
+          {label:lb(player.line)+' Toward '+sts[sts.length-1],value:1},
+          {label:lb(player.line)+' Toward '+sts[0],value:-1}
+        ]);
+      }
+    } else {
+      const lines2 = linesAt(G.route.startStation).filter(l=>LINES[l]);
+      player.line = lines2[0]||'1'; player.dir=1;
+    }
+    player.metrocardPlayed=true;
+    addLog(`${player.name} swiped Metrocard → entered at ${player.station}`,'good');
+  } else {
+    const avail = linesAt(player.station).filter(l=>LINES[l]&&l!==player.line);
+    if(avail.length===0) { addLog(`${player.name}: no transfers at ${player.station}.`); G.discard.push(card); return; }
+    let newLine;
+    if(isHuman) {
+      newLine = await showModal('Transfer Lines',`Available lines at ${player.station}:`, avail.map(l=>({label:lb(l)+' '+l+' train',value:l})));
+    } else { newLine=avail[0]; }
+    const sts=getStations(newLine);
+    let newDir;
+    if(isHuman) {
+      newDir = await showModal('Choose Direction',`Direction on ${newLine}?`,[
+        {label:lb(newLine)+' Toward '+sts[sts.length-1],value:1},
+        {label:lb(newLine)+' Toward '+sts[0],value:-1}
+      ]);
+    } else { newDir=1; }
+    doTransfer(player, newLine, newDir);
+    addLog(`${player.name} transferred to ${lb(newLine)} ${newLine} train`,'good');
+  }
+  G.discard.push(card);
+  renderTrains(); await sleep(300);
+}
+
+async function playTransfer(card, player, isHuman) {
+  snd('transfer');
+  let target;
+  if(isHuman) {
+    const opts = G.players.map((p,i)=>({label:`${p.name} (${p.station})`,value:i,disabled:p.station==='New Jersey'}));
+    const ti = await showModal('Transfer Card','Force a player to change lines:', opts);
+    target = G.players[ti];
+  } else {
+    const others = G.players.filter(p=>p!==player&&p.station!=='New Jersey');
+    target = others.length>0 ? others.reduce((b,p)=>stopsTo(p,G.route.endStation)<stopsTo(b,G.route.endStation)?p:b) : player;
+  }
+  const avail = linesAt(target.station).filter(l=>LINES[l]&&l!==target.line);
+  if(avail.length===0) { addLog(`No alt lines for ${target.name}.`); G.discard.push(card); return; }
+  let newLine, newDir;
+  if(isHuman) {
+    newLine = await showModal(`Force ${target.name}`,`Switch to which line at ${target.station}?`, avail.map(l=>({label:lb(l)+' '+l,value:l})));
+    const sts=getStations(newLine);
+    newDir = await showModal('Set Direction',`Direction for ${target.name}?`,[
+      {label:lb(newLine)+' Toward '+sts[sts.length-1],value:1},
+      {label:lb(newLine)+' Toward '+sts[0],value:-1}
+    ]);
+  } else { newLine=avail[0]; newDir=1; }
+  doTransfer(target, newLine, newDir);
+  addLog(`${player.name} forced ${target.name} onto ${lb(newLine)} ${newLine}!`,'bad');
+  G.discard.push(card);
+  renderAll(); await sleep(300);
+}
+
+async function playDisturbance(card, player, isHuman) {
+  snd('disturbance');
+  const dtype = {Breakdown:'breakdown','Medical Emergency':'medical',Delay:'delay'}[card.label]||'breakdown';
+  const available = Object.keys(LINES).filter(l=>!G.disturbances[l]);
+  if(available.length===0) { G.discard.push(card); return; }
+  let target;
+  if(isHuman) {
+    target = await showModal(`Apply ${card.label}`,'Which line to disrupt?', available.slice(0,20).map(l=>({label:lb(l)+' '+l+' train',value:l})));
+  } else {
+    const hl = G.players[0].line;
+    target = (hl&&available.includes(hl)) ? hl : available[0];
+  }
+  G.disturbances[target] = {type:dtype, by:player.name};
+  if(dtype==='medical') {
+    G.players.filter(p=>p.line===target).forEach(p=>p.skipMove=true);
+  }
+  addLog(`${player.name} applied ${card.label} to ${lb(target)} line!`,'bad');
+  G.discard.push(card);
+  renderDisturbances(); await sleep(300);
+}
+
+async function playSolution(card, player, isHuman) {
+  snd('solution');
+  const fixes = {Handyman:'breakdown',Ambulance:'medical',Schedule:'delay'}[card.label];
+  const targets = Object.entries(G.disturbances).filter(([l,d])=>d.type===fixes).map(([l])=>l);
+  if(targets.length===0) { addLog(`No ${fixes} to fix.`); G.discard.push(card); return; }
+  let target;
+  if(isHuman) {
+    target = await showModal(`Play ${card.label}`,'Clear disturbance on which line?', targets.map(l=>({label:`${lb(l)} ${l} — fix ${fixes}`,value:l})));
+  } else { target=(player.line&&targets.includes(player.line))?player.line:targets[0]; }
+  delete G.disturbances[target];
+  addLog(`${player.name} fixed ${fixes} on ${lb(target)} line!`,'good');
+  G.discard.push(card);
+  renderDisturbances(); await sleep(300);
+}
+
+function linesAt(station) {
+  return TRANSFER_LINES[station] || NODE_LINES[station] || [];
+}
+
+async function forceDiscard(player) {
+  const idx = await showModal('Too many cards!','Choose one to discard:', player.hand.map((c,i)=>({label:c.label,value:i})));
+  const [rem] = player.hand.splice(idx,1);
+  G.discard.push(rem); snd('discard');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TURN MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+function endTurn() {
+  drawnThisTurn=false; selectedCard=null;
+  G.currentPlayer=(G.currentPlayer+1)%G.players.length;
+  renderAll();
+  if(G.players[G.currentPlayer].isAI) setTimeout(runAI, 850);
+}
+
+async function runAI() {
+  const p=curP();
+  if(!p.isAI) return;
+  renderAll(); await sleep(550);
+
+  // Draw
+  if(G.deck.length>0) p.hand.push(G.deck.pop());
+  else if(G.discard.length>0) p.hand.push(G.discard.pop());
+  addLog(`${p.name} drew a card.`);
+  renderAll(); await sleep(500);
+
+  await aiDecide(p);
+  while(p.hand.length>5) G.discard.push(p.hand.shift());
+  if(checkWin(p)){triggerWin(p);return;}
+  endTurn();
+}
+
+async function aiDecide(p) {
+  // Enter NJ
+  if(p.station==='New Jersey') {
+    const mc = p.hand.find(c=>c.type==='metrocard');
+    if(mc) {
+      p.hand.splice(p.hand.indexOf(mc),1);
+      p.station=G.route.startStation;
+      const lines=linesAt(G.route.startStation).filter(l=>LINES[l]);
+      p.line=lines[0]||'1'; p.dir=bestDir(p);
+      p.metrocardPlayed=true; G.discard.push(mc);
+      addLog(`${p.name} entered at ${p.station}`,'good');
+    } else {
+      p.turnsWaited=(p.turnsWaited||0)+1;
+      if(p.turnsWaited>=2){
+        p.station=G.route.startStation;
+        const lines=linesAt(G.route.startStation).filter(l=>LINES[l]);
+        p.line=lines[0]||'1'; p.dir=bestDir(p); p.metrocardPlayed=true;
+        addLog(`${p.name} jumped the turnstile!`);
+        p.turnsWaited=0;
+      } else {
+        const d=p.hand.find(c=>c.type!=='metrocard'&&c.type!=='distance');
+        if(d){p.hand.splice(p.hand.indexOf(d),1);G.discard.push(d);}
+        else if(p.hand.length>0){G.discard.push(p.hand.pop());}
+        addLog(`${p.name} waits for Metrocard (${p.turnsWaited}/2).`);
+      }
+    }
+    renderTrains(); return;
+  }
+
+  // Fix own line
+  if(p.line&&G.disturbances[p.line]) {
+    const dtype=G.disturbances[p.line].type;
+    const fixMap={breakdown:'Handyman',medical:'Ambulance',delay:'Schedule'};
+    const fix=p.hand.find(c=>c.label===fixMap[dtype]);
+    if(fix){p.hand.splice(p.hand.indexOf(fix),1);delete G.disturbances[p.line];G.discard.push(fix);snd('solution');addLog(`${p.name} fixed ${dtype} on ${p.line}!`,'good');renderDisturbances();return;}
+  }
+
+  // Move
+  const dc=p.hand.filter(c=>c.type==='distance').sort((a,b)=>b.stops-a.stops)[0];
+  if(dc&&p.line&&canMove(p.line)&&!p.skipMove){
+    p.hand.splice(p.hand.indexOf(dc),1);
+    p.dir=bestDir(p);
+    movePlayer(p,dc.stops);
+    G.discard.push(dc); snd('move');
+    addLog(`${p.name} moved ${dc.stops} stop${dc.stops>1?'s':''} → ${p.station}`,'hl');
+    renderTrains(); await sleep(400); return;
+  }
+  if(p.skipMove){p.skipMove=false;addLog(`${p.name} skips move (Medical).`,'bad');}
+
+  if(p.difficulty!=='easy') {
+    // Disturb human
+    const human=G.players[0];
+    const distCard=p.hand.find(c=>c.type==='disturbance');
+    if(distCard&&human.line&&!G.disturbances[human.line]){
+      p.hand.splice(p.hand.indexOf(distCard),1);
+      const dtype={Breakdown:'breakdown','Medical Emergency':'medical',Delay:'delay'}[distCard.label];
+      G.disturbances[human.line]={type:dtype,by:p.name};
+      if(dtype==='medical') human.skipMove=true;
+      G.discard.push(distCard); snd('disturbance');
+      addLog(`${p.name} hit your ${human.line} with ${distCard.label}!`,'bad');
+      renderDisturbances(); return;
+    }
+  }
+
+  // Discard least useful
+  const toDisc=p.hand.find(c=>c.type==='solution')||p.hand[0];
+  if(toDisc){p.hand.splice(p.hand.indexOf(toDisc),1);G.discard.push(toDisc);addLog(`${p.name} discarded.`);}
+}
+
+function bestDir(p) {
+  if(!p.line) return 1;
+  const sts=getStations(p.line);
+  const pi=sts.indexOf(p.station), di=sts.indexOf(G.route.endStation);
+  if(pi<0) return 1;
+  if(di<0) return p.dir||1;
+  return di>pi?1:-1;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// WIN
+// ═══════════════════════════════════════════════════════════════
+function triggerWin(p) {
+  snd('win');
+  document.getElementById('win-emoji').textContent = p.isAI?'😢':'🏆';
+  document.getElementById('win-title').textContent = p.isAI?`${p.name} Wins!`:'You Win!';
+  document.getElementById('win-desc').textContent = `${p.name} reached ${G.route.endLabel}!`;
+  showScreen('win-screen');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SETUP UI
+// ═══════════════════════════════════════════════════════════════
+const TOKEN_COLORS=['#EE352E','#0039A6','#FCCC0A','#00933C','#B933AD'];
+const BOT_NAMES=['Alex','Blake','Casey','Dana','Emery'];
+let selectedColor=TOKEN_COLORS[0];
+
+function initSetupUI() {
+  // Player color grid
+  const grid=document.getElementById('color-grid'); grid.innerHTML='';
+  TOKEN_COLORS.forEach(c=>{
+    const d=document.createElement('div');
+    d.className='color-opt'+(c===selectedColor?' selected':'');
+    d.style.background=c;
+    d.onclick=()=>{
+      selectedColor=c;
+      document.querySelectorAll('.color-opt').forEach(e=>e.classList.remove('selected'));
+      d.classList.add('selected');
+      refreshBotColors();
+    };
+    grid.appendChild(d);
+  });
+  // Stripe bar
+  const sb=document.getElementById('stripe-bar'); sb.innerHTML='';
+  ['#EE352E','#00933C','#B933AD','#0039A6','#FF6319','#6CBE45','#996633','#A7A9AC','#FCCC0A'].forEach(c=>{
+    const s=document.createElement('div'); s.className='stripe';
+    s.style.cssText=`background:${c};width:60px`; sb.appendChild(s);
+  });
+  // Init bot setups
+  numOpponents=2;
+  buildBotSetups();
+  renderBotRows();
+  // Highlight default opp count
+  document.querySelectorAll('.opp-count-btn').forEach(b=>{
+    b.classList.toggle('sel', +b.dataset.n===numOpponents);
+  });
+}
+
+function buildBotSetups() {
+  // Ensure numOpponents bots; preserve existing choices where possible
+  while(botSetups.length < numOpponents) {
+    const idx = botSetups.length;
+    // pick first color not taken by player or other bots
+    const taken = new Set([selectedColor, ...botSetups.map(b=>b.color)]);
+    const col = TOKEN_COLORS.find(c=>!taken.has(c)) || TOKEN_COLORS[(idx+1)%TOKEN_COLORS.length];
+    botSetups.push({name:'AI '+BOT_NAMES[idx%BOT_NAMES.length], color:col, difficulty:'easy'});
+  }
+  botSetups = botSetups.slice(0, numOpponents);
+}
+
+function setOppCount(n) {
+  numOpponents = n;
+  document.querySelectorAll('.opp-count-btn').forEach(b=>b.classList.toggle('sel',+b.dataset.n===n));
+  buildBotSetups();
+  renderBotRows();
+}
+
+const DIFF_LEVELS = ['easy','medium','hard'];
+
+function renderBotRows() {
+  const sec = document.getElementById('bots-section');
+  sec.innerHTML = '';
+  botSetups.forEach((bot, i)=>{
+    const row = document.createElement('div');
+    row.className = 'bot-row';
+    row.style.borderColor = bot.color;
+    const diffIdx = DIFF_LEVELS.indexOf(bot.difficulty);
+    row.innerHTML=`
+      <div class="bot-swatch" id="bot-swatch-${i}" style="background:${bot.color}"></div>
+      <div class="bot-label">AI ${BOT_NAMES[i%BOT_NAMES.length]}</div>
+      <div class="bot-diff-wrap">
+        <input type="range" min="0" max="2" step="1" value="${diffIdx}" class="bot-diff-slider" oninput="setBotDiff(${i},this.value)">
+        <div class="bot-diff-label" id="bot-diff-label-${i}">${bot.difficulty.toUpperCase()}</div>
+      </div>`;
+    sec.appendChild(row);
+  });
+}
+
+function setBotDiff(i, v) {
+  const diff = DIFF_LEVELS[+v];
+  botSetups[i].difficulty = diff;
+  const lbl = document.getElementById(`bot-diff-label-${i}`);
+  if(lbl) lbl.textContent = diff.toUpperCase();
+}
+
+function refreshBotColors() {
+  // If any bot has the same color as the player, reassign it
+  botSetups.forEach((bot, i)=>{
+    if(bot.color === selectedColor) {
+      const taken = new Set([selectedColor, ...botSetups.filter((_,j)=>j!==i).map(b=>b.color)]);
+      bot.color = TOKEN_COLORS.find(c=>!taken.has(c)) || TOKEN_COLORS[(i+1)%TOKEN_COLORS.length];
+    }
+  });
+  renderBotRows();
+}
+
+function showSetup(){showScreen('setup');initSetupUI();}
+
+async function startGame() {
+  const name=document.getElementById('player-name-input').value.trim()||'Player';
+  const opponents = botSetups.slice(0,numOpponents).map((b,i)=>({
+    name:'AI '+BOT_NAMES[i%BOT_NAMES.length], color:b.color, difficulty:b.difficulty
+  }));
+  initGame(name, selectedColor, opponents);
+  showScreen('game');
+  ['bottom-wrap','game-panel','bottom-left-ctrls'].forEach(id=>document.getElementById(id).classList.add('ui-hidden'));
+  await buildSVGMap();
+  await introSequence();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INTRO SEQUENCE
+// ═══════════════════════════════════════════════════════════════
+function animatePan(svgEl, tx, ty, tw, th, ms, onFrame) {
+  return new Promise(resolve => {
+    const cur = (svgEl.getAttribute('viewBox')||`${baseVB.x} ${baseVB.y} ${baseVB.w} ${baseVB.h}`).split(/[\s,]+/).map(Number);
+    const [sx,sy,sw,sh] = cur;
+    const t0 = performance.now();
+    function ease(t){ return t<.5?2*t*t:-1+(4-2*t)*t; }
+    function step(now){
+      const p = Math.min(1,(now-t0)/ms), e=ease(p);
+      svgEl.setAttribute('viewBox',[sx+(tx-sx)*e, sy+(ty-sy)*e, sw+(tw-sw)*e, sh+(th-sh)*e].join(' '));
+      if(onFrame) onFrame();
+      p<1 ? requestAnimationFrame(step) : resolve();
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+function positionBadgeAtStation(el, stationName) {
+  const svgEl = document.querySelector('#board-area svg');
+  const boardEl = document.getElementById('board-area');
+  if(!svgEl || !boardEl) return;
+  const svgRect = svgEl.getBoundingClientRect();
+  const boardRect = boardEl.getBoundingClientRect();
+  const vb = (svgEl.getAttribute('viewBox')||`${baseVB.x} ${baseVB.y} ${baseVB.w} ${baseVB.h}`).split(/[\s,]+/).map(Number);
+  const [vbX,vbY,vbW,vbH] = vb;
+  const scale = Math.min(svgRect.width/vbW, svgRect.height/vbH);
+  const offsetX = (svgRect.width - vbW*scale)/2;
+  const offsetY = (svgRect.height - vbH*scale)/2;
+  const coord = getSVGCoord(stationName);
+  const x = svgRect.left - boardRect.left + offsetX + (coord.x - vbX)*scale;
+  const y = svgRect.top  - boardRect.top  + offsetY + (coord.y - vbY)*scale;
+  el.style.left = x + 'px';
+  el.style.top  = (y - 8) + 'px';
+  el.style.transform = 'translateX(-50%) translateY(-100%)'; // bottom-anchor just above station
+}
+
+function updateRouteBadges() {
+  const bs = document.getElementById('badge-start');
+  const be = document.getElementById('badge-end');
+  if(bs && bs.classList.contains('visible') && bs.dataset.station) positionBadgeAtStation(bs, bs.dataset.station);
+  if(be && be.classList.contains('visible') && be.dataset.station) positionBadgeAtStation(be, be.dataset.station);
+}
+
+let _introFlyCard = null;
+
+async function introSequence() {
+  const overlay = document.getElementById('intro-overlay');
+  overlay.classList.remove('hidden');
+  overlay.style.opacity = '1';
+
+  // ── Fan build ──
+  const fanEl = document.getElementById('intro-fan');
+  fanEl.innerHTML = '';
+  const N = 7, cards = [];
+  for(let i=0;i<N;i++){
+    const c=document.createElement('div');
+    c.className='fan-c';
+    fanEl.appendChild(c);
+    cards.push(c);
+  }
+  await sleep(120);
+
+  // ── Shuffle jitter before fanning out ──
+  for(let s=0;s<6;s++){
+    cards.forEach(c=>{
+      const jx = (Math.random()-0.5)*26;
+      const jy = (Math.random()-0.5)*10;
+      const jr = (Math.random()-0.5)*8;
+      c.style.transition = 'transform .11s ease-out';
+      c.style.transform = `translateX(calc(-50% + ${jx}px)) translateY(${jy}px) rotate(${jr}deg)`;
+      c.style.zIndex = Math.floor(Math.random()*N);
+    });
+    await sleep(110);
+  }
+  cards.forEach(c=>{ c.style.transform = 'translateX(-50%)'; c.style.zIndex = 0; });
+  await sleep(160);
+
+  // Fan out
+  const angles = [-42,-28,-16,-5,8,20,34];
+  const tx = [-130,-90,-54,-14,24,62,104];
+  cards.forEach((c,i)=>{
+    c.style.transition = 'transform .65s cubic-bezier(.4,0,.2,1)';
+    c.style.transform=`translateX(calc(-50% + ${tx[i]}px)) rotate(${angles[i]}deg)`;
+    c.style.transitionDelay=`${i*55}ms`;
+    c.style.zIndex=i;
+  });
+  await sleep(750);
+
+  // ── Prompt the player to pick a card ──
+  const promptEl = document.createElement('div');
+  promptEl.id = 'intro-pick-prompt';
+  promptEl.textContent = 'Choose a route card';
+  fanEl.appendChild(promptEl);
+  await sleep(30);
+  promptEl.classList.add('show');
+
+  const baseTransforms = cards.map((c,i)=>`translateX(calc(-50% + ${tx[i]}px)) rotate(${angles[i]}deg)`);
+  cards.forEach((c,i)=>{
+    c.style.cursor = 'pointer';
+    c.addEventListener('mouseenter', ()=>{ c.style.transform = baseTransforms[i] + ' translateY(-18px) scale(1.07)'; c.style.zIndex = 50; });
+    c.addEventListener('mouseleave', ()=>{ c.style.transform = baseTransforms[i]; c.style.zIndex = i; });
+  });
+
+  const midIdx = await new Promise(resolve=>{
+    cards.forEach((c,i)=>{ c.onclick = ()=>resolve(i); });
+  });
+  cards.forEach(c=>{ c.onclick = null; c.style.cursor = 'default'; });
+  promptEl.classList.remove('show');
+  promptEl.remove();
+
+  // Lift the chosen card
+  const mid = cards[midIdx];
+  mid.style.transitionDelay = '0ms';
+  mid.style.transform = baseTransforms[midIdx] + ' translateY(-28px) scale(1.13)';
+  mid.style.boxShadow = '0 0 32px rgba(252,204,10,.45)';
+  mid.style.borderColor = '#FCCC0A';
+  mid.style.zIndex = 20;
+  await sleep(450);
+
+  // ── Card flip to reveal route, then move to center of screen ──
+  const midRect = mid.getBoundingClientRect();
+  // Build a 3D flip card at the same screen position
+  const flipWrap = document.createElement('div');
+  flipWrap.style.cssText = `position:fixed;left:${midRect.left}px;top:${midRect.top}px;width:${midRect.width}px;height:${midRect.height}px;z-index:300;transform-style:preserve-3d;transition:transform .75s cubic-bezier(.4,0,.2,1),left .75s cubic-bezier(.4,0,.2,1),top .75s cubic-bezier(.4,0,.2,1),width .75s cubic-bezier(.4,0,.2,1),height .75s cubic-bezier(.4,0,.2,1);`;
+  const mkFace = (extra) => {
+    const d = document.createElement('div');
+    d.style.cssText = `position:absolute;inset:0;border-radius:9px;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:2px solid #FCCC0A;box-shadow:0 0 32px rgba(252,204,10,.45);${extra}`;
+    return d;
+  };
+  const flipBack = mkFace(`background:url('route back.png') center/cover no-repeat;`);
+  const flipFront = mkFace(`background:url('${G.route.img}') center/cover no-repeat;transform:rotateY(180deg);`);
+  flipWrap.appendChild(flipBack);
+  flipWrap.appendChild(flipFront);
+  document.body.appendChild(flipWrap);
+  mid.style.opacity = '0';
+  await sleep(60);
+
+  snd('play');
+  flipWrap.style.transform = 'rotateY(180deg)';
+
+  // ── Other fan cards fade + fly off randomly while the chosen card flips ──
+  cards.forEach((c,i)=>{
+    if(i===midIdx) return;
+    const dx = (Math.random()<0.5?-1:1)*(700+Math.random()*600);
+    const dy = -(300+Math.random()*700);
+    const rot = (Math.random()<0.5?-1:1)*(140+Math.random()*260);
+    c.style.transition = 'transform .8s cubic-bezier(.34,0,.64,1),opacity .65s ease-in';
+    c.style.transitionDelay = `${Math.random()*120}ms`;
+    c.style.transform += ` translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
+    c.style.opacity = '0';
+  });
+
+  // Move the revealed card to the center of the screen, slightly larger
+  const centerW = 230, centerH = Math.round(230*(124/90));
+  flipWrap.style.left   = (window.innerWidth/2 - centerW/2) + 'px';
+  flipWrap.style.top    = (window.innerHeight/2 - centerH/2) + 'px';
+  flipWrap.style.width  = centerW + 'px';
+  flipWrap.style.height = centerH + 'px';
+
+  await sleep(800);
+
+  // ── Confirm button — card is centered and revealed ──
+  document.getElementById('intro-confirm-btn').classList.add('show');
+  await new Promise(r=>{ confirmRouteResolve=r; });
+  document.getElementById('intro-confirm-btn').classList.remove('show');
+
+  // ── Confirm clicked: fade backdrop, fly card to corner, and pan to start — together ──
+  overlay.style.transition = 'opacity .5s ease';
+  overlay.style.opacity = '0';
+  setTimeout(()=>{ overlay.classList.add('hidden'); overlay.style.opacity=''; overlay.style.transition=''; }, 500);
+
+  const cardW = 180, cardH = Math.round(180*(124/90));
+  const destLeft = window.innerWidth - 20 - cardW;
+  const destTop  = 16;
+  flipWrap.style.transition = 'left .85s cubic-bezier(.4,0,.2,1),top .85s cubic-bezier(.4,0,.2,1),width .85s cubic-bezier(.4,0,.2,1),height .85s cubic-bezier(.4,0,.2,1)';
+  flipWrap.style.left   = destLeft + 'px';
+  flipWrap.style.top    = destTop  + 'px';
+  flipWrap.style.width  = cardW + 'px';
+  flipWrap.style.height = cardH + 'px';
+  _introFlyCard = flipWrap;
+
+  // Pan to start station at the same time the card flies to the corner
+  const svgEl = document.querySelector('#board-area svg');
+  const route = G.route;
+  const sc = getSVGCoord(route.startStation);
+  const ec = getSVGCoord(route.endStation);
+  const zW = 480, zH = 400;
+  await animatePan(svgEl, sc.x-zW/2, sc.y-zH/2, zW, zH, 1300);
+
+  // Show START badge pinned to start station on map
+  const bStart = document.getElementById('badge-start');
+  bStart.dataset.station = route.startStation;
+  positionBadgeAtStation(bStart, route.startStation);
+  bStart.classList.add('visible');
+  await sleep(3000);
+
+  // ── Pan to end station — track START badge during pan ──
+  await animatePan(svgEl, ec.x-zW/2, ec.y-zH/2, zW, zH, 1300, updateRouteBadges);
+
+  // Show END badge pinned to end station on map
+  const bEnd = document.getElementById('badge-end');
+  bEnd.dataset.station = route.endStation;
+  positionBadgeAtStation(bEnd, route.endStation);
+  bEnd.classList.add('visible');
+  await sleep(2000);
+
+  // ── Pan out to full map — track both badges ──
+  await animatePan(svgEl, baseVB.x, baseVB.y, baseVB.w, baseVB.h, 1600, updateRouteBadges);
+  updateRouteBadges(); // snap to final position
+
+  // ── Wait, then bring in the game chrome and deal cards together ──
+  await sleep(3000);
+
+  // Ease in the game chrome (hand, chat/deck, players) from the bottom
+  ['bottom-wrap','game-panel','bottom-left-ctrls'].forEach((id,i)=>{
+    setTimeout(()=>document.getElementById(id).classList.remove('ui-hidden'), i*130);
+  });
+
+  // Shrink card to 60% in top-right corner
+  const smallW = Math.round(cardW * 0.6);
+  const smallH = Math.round(cardH * 0.6);
+  const smallLeft = window.innerWidth - 12 - smallW;
+  flipWrap.style.transition = 'left .55s cubic-bezier(.4,0,.2,1),top .55s cubic-bezier(.4,0,.2,1),width .55s cubic-bezier(.4,0,.2,1),height .55s cubic-bezier(.4,0,.2,1)';
+  flipWrap.style.left   = smallLeft + 'px';
+  flipWrap.style.top    = '12px';
+  flipWrap.style.width  = smallW + 'px';
+  flipWrap.style.height = smallH + 'px';
+  flipWrap.style.cursor = 'pointer';
+
+  // Shrink badges in-place on map (keep pinned to station coordinates)
+  const shrinkBadgeInPlace = (el) => {
+    el.style.transition = 'font-size .3s, padding .3s, border-radius .3s, opacity .3s';
+    el.style.fontSize  = '11px';
+    el.style.padding   = '3px 9px';
+    el.style.borderRadius = '5px';
+    el.style.opacity   = '0.85';
+    el.dataset.small   = '1';
+    el.addEventListener('mouseenter', ()=>{
+      if(!el.dataset.small) return;
+      el.style.fontSize='26px'; el.style.padding='12px 34px';
+      el.style.borderRadius='10px'; el.style.opacity='1'; el.style.zIndex='250';
+    });
+    el.addEventListener('mouseleave', ()=>{
+      if(!el.dataset.small) return;
+      el.style.fontSize='11px'; el.style.padding='3px 9px';
+      el.style.borderRadius='5px'; el.style.opacity='0.85'; el.style.zIndex='205';
+    });
+  };
+  shrinkBadgeInPlace(bStart);
+  shrinkBadgeInPlace(bEnd);
+
+  // Hover to expand/shrink card
+  flipWrap.addEventListener('mouseenter', ()=>{
+    flipWrap.style.transition='left .3s,top .3s,width .3s,height .3s';
+    flipWrap.style.left=(window.innerWidth-20-cardW)+'px'; flipWrap.style.top='16px';
+    flipWrap.style.width=cardW+'px'; flipWrap.style.height=cardH+'px';
+  });
+  flipWrap.addEventListener('mouseleave', ()=>{
+    flipWrap.style.transition='left .3s,top .3s,width .3s,height .3s';
+    flipWrap.style.left=smallLeft+'px'; flipWrap.style.top='12px';
+    flipWrap.style.width=smallW+'px'; flipWrap.style.height=smallH+'px';
+  });
+
+  // ── Deal cards (overlaps with the chrome easing in) ──
+  await dealCardsAnimation();
+  renderAll();
+  addLog(`🚇 Route: ${route.startLabel} → ${route.endLabel}`, 'hl');
+  addLog(`Play a Metrocard to enter at ${route.startLabel}.`);
+  renderLog();
+}
+
+function confirmRoute() {
+  if(confirmRouteResolve) { confirmRouteResolve(); confirmRouteResolve=null; }
+}
+
+async function dealCardsAnimation() {
+  // Deal 5 cards to each player with flying animation
+  const handRect = document.getElementById('hand-inner').getBoundingClientRect();
+  const cx = window.innerWidth/2, cy = window.innerHeight/2;
+  const totalPlayers = G.players.length;
+  // Pre-deal all hands first
+  const deck = G.deck;
+  for(let i=0;i<5;i++) G.players.forEach(p=>{ if(deck.length) p.hand.push(deck.pop()); });
+
+  const cardDelay = 110;
+  const numCards = 5*totalPlayers;
+  for(let card=0;card<5;card++) {
+    for(let pi=0;pi<totalPlayers;pi++) {
+      const delay = (card*totalPlayers+pi)*cardDelay;
+      // Target: human hand center, AI players off-screen top
+      const tx = pi===0 ? handRect.left+handRect.width/2 : cx + (pi-1)*60;
+      const ty = pi===0 ? handRect.top+handRect.height/2 : 40;
+      setTimeout(()=>flyCard(cx,cy,tx,ty), delay);
+    }
+  }
+  snd('draw');
+  await sleep(numCards*cardDelay + 600);
+}
+
+function flyCard(x0,y0,x1,y1) {
+  const el = document.createElement('div');
+  el.className='deal-fly';
+  el.style.cssText=`left:${x0}px;top:${y0}px;transform:translate(-50%,-50%);opacity:1;transition:none`;
+  document.body.appendChild(el);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    el.style.transition='left .42s cubic-bezier(.4,0,.2,1),top .42s,opacity .38s .1s,transform .42s';
+    el.style.left=x1+'px'; el.style.top=y1+'px';
+    el.style.transform='translate(-50%,-50%) scale(.5)';
+    el.style.opacity='0';
+    setTimeout(()=>el.remove(),500);
+  }));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CHAT TOGGLE
+// ═══════════════════════════════════════════════════════════════
+function toggleChat() {
+  const log=document.getElementById('log');
+  const icon=document.getElementById('chat-toggle');
+  log.classList.toggle('collapsed');
+  icon.classList.toggle('open');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MAP ZOOM / PAN
+// ═══════════════════════════════════════════════════════════════
+
+// Pending viewBox to apply on next rAF, and debounce timer for train re-render
+let _vbPending=null, _vbRafId=null, _trainDebounce=null;
+
+function _applyVB(svgEl, vb) {
+  // Queue viewBox write for next animation frame — coalesces rapid events
+  _vbPending = vb;
+  if(_vbRafId) return;
+  _vbRafId = requestAnimationFrame(()=>{
+    _vbRafId = null;
+    if(_vbPending) { svgEl.setAttribute('viewBox',_vbPending); _vbPending=null; }
+    updateRouteBadges();
+    // Debounce train positions: update 120ms after interaction stops
+    clearTimeout(_trainDebounce);
+    _trainDebounce = setTimeout(()=>{ if(G&&G.players) renderTrains(); }, 120);
+  });
+}
+
+function doZoom(factor) {
+  const svgEl=document.querySelector('#board-area svg');
+  if(!svgEl||!baseVB) return;
+  if(factor===0) {
+    svgEl.setAttribute('viewBox',`${baseVB.x} ${baseVB.y} ${baseVB.w} ${baseVB.h}`);
+    renderTrains(); return;
+  }
+  const [cx,cy,cw,ch]=svgEl.getAttribute('viewBox').split(/[\s,]+/).map(Number);
+  const newW=Math.max(baseVB.w/8, Math.min(baseVB.w, cw*factor));
+  const newH=Math.max(baseVB.h/8, Math.min(baseVB.h, ch*factor));
+  let nx=(cx+cw/2)-newW/2, ny=(cy+ch/2)-newH/2;
+  nx=Math.max(baseVB.x, Math.min(baseVB.x+baseVB.w-newW, nx));
+  ny=Math.max(baseVB.y, Math.min(baseVB.y+baseVB.h-newH, ny));
+  _applyVB(svgEl, `${nx} ${ny} ${newW} ${newH}`);
+}
+
+function initMapInteraction() {
+  const boardArea=document.getElementById('board-area');
+  const svgEl=document.querySelector('#board-area svg');
+  if(!svgEl) return;
+
+  // Cache rect during a drag — avoids repeated getBoundingClientRect calls
+  let dragRect=null;
+
+  // Wheel zoom toward cursor
+  boardArea.addEventListener('wheel', e=>{
+    e.preventDefault();
+    if(!baseVB) return;
+    const factor=e.deltaY<0 ? 1/1.2 : 1.2;
+    const [cx,cy,cw,ch]=svgEl.getAttribute('viewBox').split(/[\s,]+/).map(Number);
+    const rect=svgEl.getBoundingClientRect();
+    const sc=Math.min(rect.width/cw, rect.height/ch);
+    const ox=(rect.width-cw*sc)/2, oy=(rect.height-ch*sc)/2;
+    const newW=Math.max(baseVB.w/8, Math.min(baseVB.w, cw*factor));
+    const newH=Math.max(baseVB.h/8, Math.min(baseVB.h, ch*factor));
+    const ratX=(e.clientX-rect.left-ox)/sc/cw;
+    const ratY=(e.clientY-rect.top -oy)/sc/ch;
+    const svgCX=cx+(e.clientX-rect.left-ox)/sc;
+    const svgCY=cy+(e.clientY-rect.top -oy)/sc;
+    let nx=svgCX-ratX*newW, ny=svgCY-ratY*newH;
+    nx=Math.max(baseVB.x, Math.min(baseVB.x+baseVB.w-newW, nx));
+    ny=Math.max(baseVB.y, Math.min(baseVB.y+baseVB.h-newH, ny));
+    _applyVB(svgEl, `${nx} ${ny} ${newW} ${newH}`);
+  },{passive:false});
+
+  // Drag to pan — cache rect on mousedown, reuse on mousemove
+  let dragging=false, lastX=0, lastY=0, dragSF=1;
+  boardArea.addEventListener('mousedown', e=>{
+    if(e.button!==0) return;
+    if(!baseVB) return;
+    const [,,cw]=svgEl.getAttribute('viewBox').split(/[\s,]+/).map(Number);
+    if(cw>=baseVB.w-1) return; // not zoomed in
+    dragRect=svgEl.getBoundingClientRect();
+    dragSF=cw/dragRect.width;
+    dragging=true; lastX=e.clientX; lastY=e.clientY;
+    boardArea.style.cursor='grabbing';
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e=>{
+    if(!dragging) return;
+    const [cx,cy,cw,ch]=svgEl.getAttribute('viewBox').split(/[\s,]+/).map(Number);
+    let nx=cx-(e.clientX-lastX)*dragSF, ny=cy-(e.clientY-lastY)*dragSF;
+    nx=Math.max(baseVB.x, Math.min(baseVB.x+baseVB.w-cw, nx));
+    ny=Math.max(baseVB.y, Math.min(baseVB.y+baseVB.h-ch, ny));
+    _applyVB(svgEl, `${nx} ${ny} ${cw} ${ch}`);
+    lastX=e.clientX; lastY=e.clientY;
+  });
+  document.addEventListener('mouseup',()=>{
+    dragging=false; dragRect=null;
+    boardArea.style.cursor='';
+  });
+}
+
+window.addEventListener('resize',()=>{ if(G&&G.players) renderTrains(); });
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+window.onload=()=>showScreen('welcome');
+</script>
+</body>
+</html>
