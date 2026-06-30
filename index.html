@@ -242,7 +242,7 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
 /* ── PLAYERS + ZOOM — BOTTOM-LEFT CONTAINER ── */
 #bottom-left-ctrls{
   position:absolute;bottom:20px;left:16px;
-  z-index:50;
+  z-index:60;
   display:flex;align-items:flex-end;gap:8px;
   transition:transform .6s cubic-bezier(.34,0,.64,1),opacity .6s ease;
 }
@@ -262,7 +262,7 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
 
 /* ── BOTTOM WRAP — floats over board ── */
 #game{position:relative}
-#bottom-wrap{position:absolute;bottom:0;left:0;right:0;z-index:29;pointer-events:none;transition:transform .6s cubic-bezier(.34,0,.64,1),opacity .6s ease}
+#bottom-wrap{position:absolute;bottom:0;left:0;right:0;z-index:65;pointer-events:none;transition:transform .6s cubic-bezier(.34,0,.64,1),opacity .6s ease}
 #bottom-wrap>*{pointer-events:auto}
 #hand-strip{background:none!important;border:none!important}
 #action-bar{background:transparent!important;border-top:none!important}
@@ -274,7 +274,7 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
 .bp-count{display:none!important}
 
 /* ── FLOATING GAME PANEL ── */
-#game-panel{position:absolute;bottom:16px;right:16px;z-index:50;display:flex;flex-direction:column;gap:8px;width:248px;transition:transform .6s cubic-bezier(.34,0,.64,1),opacity .6s ease}
+#game-panel{position:absolute;bottom:16px;right:16px;z-index:60;display:flex;flex-direction:column;gap:8px;width:248px;transition:transform .6s cubic-bezier(.34,0,.64,1),opacity .6s ease}
 .panel-block{background:rgba(7,12,24,.94);border:1px solid #1a2840;border-radius:10px;overflow:hidden}
 
 /* chat row */
@@ -325,6 +325,44 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
 .zoom-btn{width:32px;height:32px;border-radius:8px;background:rgba(7,12,24,.92);border:1px solid #1a2840;color:#888;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;transition:all .15s;line-height:1}
 .zoom-btn:hover{background:rgba(30,44,74,.95);color:#fff}
 
+/* ── TURN INDICATOR: pulsing border in the current player's color ── */
+#turn-glow{
+  position:absolute;inset:0;z-index:80;pointer-events:none;
+  border:5px solid var(--turn-color,#666);
+  box-shadow:inset 0 0 38px var(--turn-color,#666);
+  opacity:.4;
+  transition:border-color .4s ease,box-shadow .4s ease;
+  animation:turnPulse 2.1s ease-in-out infinite;
+}
+#turn-glow.mine{animation-duration:1.3s;opacity:.6}
+@keyframes turnPulse{
+  0%,100%{opacity:.32}
+  50%{opacity:.7}
+}
+
+/* ── "YOUR TURN" BANNER ── */
+#your-turn-banner{
+  position:fixed;top:16%;left:50%;
+  transform:translate(-50%,-50%) scale(.6);
+  font-size:40px;font-weight:900;letter-spacing:.13em;
+  color:#fff;text-shadow:0 4px 22px rgba(0,0,0,.75);
+  padding:16px 42px;border-radius:14px;
+  background:rgba(8,13,26,.6);
+  border:3px solid var(--turn-color,#EE352E);
+  box-shadow:0 0 44px var(--turn-color,#EE352E);
+  opacity:0;pointer-events:none;z-index:150;
+  transition:opacity .3s ease,transform .4s cubic-bezier(.34,1.56,.64,1);
+  white-space:nowrap;
+}
+#your-turn-banner.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+
+/* ── FLYING CARD (draw / play animations) ── */
+.draw-fly{position:fixed;z-index:220;pointer-events:none;perspective:800px}
+.draw-fly .df-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .3s ease}
+.draw-fly .df-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:8px;background-size:cover;background-position:center;border:2px solid #253a6a;box-shadow:0 8px 20px rgba(0,0,0,.55)}
+.draw-fly .df-back{background-image:url('action card/Front@6x.png');background-color:#1a3a5c}
+.draw-fly .df-front{transform:rotateY(180deg)}
+
 /* ── INTRO OVERLAY ── */
 #intro-overlay{position:fixed;inset:0;z-index:120;background:rgba(0,0,0,.87);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px}
 #intro-overlay.hidden{display:none}
@@ -343,7 +381,7 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
 #intro-confirm-btn.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
 #intro-confirm-btn:hover{background:#c0392b}
 /* Station reveal badges — absolutely positioned inside #board-area */
-.station-badge{position:absolute;transform:translateX(-50%);z-index:205;padding:10px 28px;border-radius:9px;font-size:22px;font-weight:900;letter-spacing:.09em;color:#fff;opacity:0;pointer-events:none;transition:opacity .35s ease,font-size .25s,padding .25s,border-radius .25s;white-space:nowrap;user-select:none;cursor:default}
+.station-badge{position:absolute;transform:translateX(-50%);z-index:22;padding:10px 28px;border-radius:9px;font-size:22px;font-weight:900;letter-spacing:.09em;color:#fff;opacity:0;pointer-events:none;transition:opacity .35s ease,font-size .25s,padding .25s,border-radius .25s;white-space:nowrap;user-select:none;cursor:default}
 #badge-start{background:#18832e;box-shadow:0 3px 16px rgba(0,0,0,.6)}
 #badge-end{background:#c0392b;box-shadow:0 3px 16px rgba(0,0,0,.6)}
 .station-badge.visible{opacity:1;pointer-events:auto}
@@ -485,7 +523,10 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
       <button id="play-btn" onclick="playSelected()" disabled>Select a card</button>
     </div>
   </div>
+
+  <div id="turn-glow"></div>
 </div>
+<div id="your-turn-banner">YOUR TURN</div>
 
 <!-- INTRO OVERLAY (just the fan) -->
 <div id="intro-overlay" class="hidden">
@@ -1213,7 +1254,7 @@ function renderPlayers() {
   el.innerHTML = G.players.map((p,i)=>{
     const active = i===G.currentPlayer;
     const lineInfo = p.line ? lb(p.line)+(p.dir>0?'↓':'↑') : '';
-    return `<div class="player-row ${active?'active':''}">
+    return `<div class="player-row ${active?'active':''}" data-pi="${i}">
       <div class="player-dot" style="background:${p.color}"></div>
       <div style="flex:1;min-width:0">
         <div class="player-name">${p.name}${p.isAI?' 🤖':''}</div>
@@ -1389,23 +1430,77 @@ function selectCard(card, div, rot) {
   updateUI();
 }
 
-function drawFromDeck() {
+// ═══════════════════════════════════════════════════════════════
+// CARD FLIGHT ANIMATIONS
+// ═══════════════════════════════════════════════════════════════
+const FLY_CARD_W = 100, FLY_CARD_H = 138;
+
+function rectOf(selOrEl) {
+  const el = typeof selOrEl==='string' ? document.querySelector(selOrEl) : selOrEl;
+  return el ? el.getBoundingClientRect() : null;
+}
+
+// Flies a card-shaped div from `fromRect` to `toRect`. If `faceDown`, it starts
+// showing the card back and flips to the face mid-flight. If `toScale<1`, it
+// shrinks down as it lands (used when landing on a small target like a player
+// row or the discard pile).
+function flyActionCard({card, fromRect, toRect, toScale=1, faceDown=false, fade=false}) {
+  return new Promise(resolve=>{
+    if(!fromRect || !toRect) { resolve(); return; }
+    const w1 = FLY_CARD_W*toScale, h1 = FLY_CARD_H*toScale;
+    const el = document.createElement('div');
+    el.className = 'draw-fly';
+    el.style.left = (fromRect.left + fromRect.width/2 - FLY_CARD_W/2)+'px';
+    el.style.top  = (fromRect.top  + fromRect.height/2 - FLY_CARD_H/2)+'px';
+    el.style.width = FLY_CARD_W+'px'; el.style.height = FLY_CARD_H+'px';
+    const frontImg = (card && card.img) || 'action card/Front@6x.png';
+    el.innerHTML = `<div class="df-inner"><div class="df-face df-back"></div><div class="df-face df-front" style="background-image:url('${frontImg}')"></div></div>`;
+    document.body.appendChild(el);
+    const inner = el.querySelector('.df-inner');
+    if(!faceDown) inner.style.transform = 'rotateY(180deg)';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      el.style.transition = `left .42s cubic-bezier(.3,0,.2,1), top .42s cubic-bezier(.3,0,.2,1), width .42s, height .42s${fade?', opacity .25s .3s':''}`;
+      el.style.left = (toRect.left + toRect.width/2 - w1/2)+'px';
+      el.style.top  = (toRect.top  + toRect.height/2 - h1/2)+'px';
+      el.style.width = w1+'px'; el.style.height = h1+'px';
+      if(faceDown) setTimeout(()=>{ inner.style.transform = 'rotateY(180deg)'; }, 150);
+      if(fade) setTimeout(()=>{ el.style.opacity='0'; }, 300);
+      setTimeout(()=>{ el.remove(); resolve(); }, 440);
+    }));
+  });
+}
+
+// Fire-and-forget version for cosmetic AI play animations that shouldn't block decision flow.
+function flyCardToDiscard(player, card) {
+  const pi = G.players.indexOf(player);
+  const fromRect = rectOf(`#players-list .player-row[data-pi="${pi}"]`);
+  const toRect = rectOf('.bp-disc');
+  flyActionCard({card, fromRect, toRect, toScale:0.4, faceDown:false, fade:true});
+}
+
+async function drawFromDeck() {
   if(G.currentPlayer!==0||drawnThisTurn) return;
   if(G.deck.length===0) reshuffleDiscard();
   if(G.deck.length===0) return;
   const card = G.deck.pop();
-  G.players[0].hand.push(card);
-  snd('draw'); addLog('You drew a card.');
   drawnThisTurn = true;
+  renderDeck(); updateUI();
+  snd('draw');
+  await flyActionCard({card, fromRect:rectOf('.bp-deck'), toRect:rectOf('#hand-inner'), toScale:1, faceDown:true});
+  G.players[0].hand.push(card);
+  addLog('You drew a card.');
   renderAll();
 }
 
-function drawFromDiscard() {
+async function drawFromDiscard() {
   if(G.currentPlayer!==0||drawnThisTurn||G.discard.length===0) return;
   const card = G.discard.pop();
-  G.players[0].hand.push(card);
-  snd('draw'); addLog(`You took the discard: <b>${card.label}</b>`);
   drawnThisTurn = true;
+  renderDeck(); updateUI();
+  snd('draw');
+  await flyActionCard({card, fromRect:rectOf('.bp-disc'), toRect:rectOf('#hand-inner'), toScale:1, faceDown:false});
+  G.players[0].hand.push(card);
+  addLog(`You took the discard: <b>${card.label}</b>`);
   renderAll();
 }
 
@@ -1646,10 +1741,27 @@ async function forceDiscard(player) {
 // ═══════════════════════════════════════════════════════════════
 // TURN MANAGEMENT
 // ═══════════════════════════════════════════════════════════════
+function updateTurnGlow() {
+  const cp = curP();
+  document.documentElement.style.setProperty('--turn-color', cp.color);
+  const glow = document.getElementById('turn-glow');
+  if(glow) glow.classList.toggle('mine', G.currentPlayer===0);
+}
+
+function showYourTurnBanner() {
+  const b = document.getElementById('your-turn-banner');
+  if(!b) return;
+  b.classList.add('show');
+  clearTimeout(b._hideTimer);
+  b._hideTimer = setTimeout(()=>b.classList.remove('show'), 1500);
+}
+
 function endTurn() {
   drawnThisTurn=false; selectedCard=null;
   G.currentPlayer=(G.currentPlayer+1)%G.players.length;
   renderAll();
+  updateTurnGlow();
+  if(G.currentPlayer===0) showYourTurnBanner();
   if(G.players[G.currentPlayer].isAI) setTimeout(runAI, 850);
 }
 
@@ -1658,9 +1770,18 @@ async function runAI() {
   if(!p.isAI) return;
   renderAll(); await sleep(550);
 
-  // Draw
-  if(G.deck.length>0) p.hand.push(G.deck.pop());
-  else if(G.discard.length>0) p.hand.push(G.discard.pop());
+  // Draw (animated: flies from the deck/discard pile to this AI's row)
+  let card=null, fromSel=null;
+  if(G.deck.length>0) { card=G.deck.pop(); fromSel='.bp-deck'; }
+  else if(G.discard.length>0) { card=G.discard.pop(); fromSel='.bp-disc'; }
+  if(card) {
+    renderDeck();
+    const pi = G.players.indexOf(p);
+    const toRect = rectOf(`#players-list .player-row[data-pi="${pi}"]`);
+    snd('draw');
+    await flyActionCard({card, fromRect:rectOf(fromSel), toRect, toScale:0.4, faceDown:fromSel==='.bp-deck', fade:true});
+    p.hand.push(card);
+  }
   addLog(`${p.name} drew a card.`);
   renderAll(); await sleep(500);
 
@@ -1684,7 +1805,7 @@ async function aiDecide(p) {
       p.hand.splice(p.hand.indexOf(mc),1);
       p.station=G.route.startStation;
       p.line=bestLineAt(G.route.startStation, null, false)||'1'; p.dir=bestDir(p);
-      p.metrocardPlayed=true; G.discard.push(mc);
+      p.metrocardPlayed=true; G.discard.push(mc); flyCardToDiscard(p,mc);
       addLog(`${p.name} entered at ${p.station}`,'good');
     } else {
       p.turnsWaited=(p.turnsWaited||0)+1;
@@ -1695,8 +1816,8 @@ async function aiDecide(p) {
         p.turnsWaited=0;
       } else {
         const d=p.hand.find(c=>c.type!=='metrocard'&&c.type!=='distance');
-        if(d){p.hand.splice(p.hand.indexOf(d),1);G.discard.push(d);}
-        else if(p.hand.length>0){G.discard.push(p.hand.pop());}
+        if(d){p.hand.splice(p.hand.indexOf(d),1);G.discard.push(d);flyCardToDiscard(p,d);}
+        else if(p.hand.length>0){const dd=p.hand.pop();G.discard.push(dd);flyCardToDiscard(p,dd);}
         addLog(`${p.name} waits for Metrocard (${p.turnsWaited}/2).`);
       }
     }
@@ -1708,7 +1829,7 @@ async function aiDecide(p) {
     const dtype=G.disturbances[p.line].type;
     const fixMap={breakdown:'Handyman',medical:'Ambulance',delay:'Schedule'};
     const fix=p.hand.find(c=>c.label===fixMap[dtype]);
-    if(fix){p.hand.splice(p.hand.indexOf(fix),1);delete G.disturbances[p.line];G.discard.push(fix);snd('solution');addLog(`${p.name} fixed ${dtype} on ${p.line}!`,'good');renderDisturbances();return;}
+    if(fix){p.hand.splice(p.hand.indexOf(fix),1);delete G.disturbances[p.line];G.discard.push(fix);flyCardToDiscard(p,fix);snd('solution');addLog(`${p.name} fixed ${dtype} on ${p.line}!`,'good');renderDisturbances();return;}
   }
 
   // Transfer to a better line (via Metrocard) if the current one can't reach the goal
@@ -1722,7 +1843,7 @@ async function aiDecide(p) {
         p.hand.splice(p.hand.indexOf(mc),1);
         doTransfer(p, better, 1);
         p.dir = bestDir(p);
-        G.discard.push(mc); snd('transfer');
+        G.discard.push(mc); flyCardToDiscard(p,mc); snd('transfer');
         addLog(`${p.name} transferred to ${lb(better)} ${better}!`,'good');
         renderTrains(); await sleep(400); return;
       }
@@ -1735,7 +1856,7 @@ async function aiDecide(p) {
     p.hand.splice(p.hand.indexOf(dc),1);
     p.dir=bestDir(p);
     movePlayer(p,dc.stops);
-    G.discard.push(dc); snd('move');
+    G.discard.push(dc); flyCardToDiscard(p,dc); snd('move');
     addLog(`${p.name} moved ${dc.stops} stop${dc.stops>1?'s':''} → ${p.station}`,'hl');
     renderTrains(); await sleep(400); return;
   }
@@ -1750,7 +1871,7 @@ async function aiDecide(p) {
       const dtype={Breakdown:'breakdown','Medical Emergency':'medical',Delay:'delay'}[distCard.label];
       G.disturbances[human.line]={type:dtype,by:p.name};
       if(dtype==='medical') human.skipMove=true;
-      G.discard.push(distCard); snd('disturbance');
+      G.discard.push(distCard); flyCardToDiscard(p,distCard); snd('disturbance');
       addLog(`${p.name} hit your ${human.line} with ${distCard.label}!`,'bad');
       renderDisturbances(); return;
     }
@@ -1758,7 +1879,7 @@ async function aiDecide(p) {
 
   // Discard least useful
   const toDisc=p.hand.find(c=>c.type==='solution')||p.hand[0];
-  if(toDisc){p.hand.splice(p.hand.indexOf(toDisc),1);G.discard.push(toDisc);addLog(`${p.name} discarded.`);}
+  if(toDisc){p.hand.splice(p.hand.indexOf(toDisc),1);G.discard.push(toDisc);flyCardToDiscard(p,toDisc);addLog(`${p.name} discarded.`);}
 }
 
 function bestDir(p) {
@@ -2152,7 +2273,7 @@ async function introSequence() {
     el.addEventListener('mouseleave', ()=>{
       if(!el.dataset.small) return;
       el.style.fontSize='11px'; el.style.padding='3px 9px';
-      el.style.borderRadius='5px'; el.style.opacity='0.85'; el.style.zIndex='205';
+      el.style.borderRadius='5px'; el.style.opacity='0.85'; el.style.zIndex='22';
     });
   };
   shrinkBadgeInPlace(bStart);
@@ -2173,6 +2294,8 @@ async function introSequence() {
   // ── Deal cards (overlaps with the chrome easing in) ──
   await dealCardsAnimation();
   renderAll();
+  updateTurnGlow();
+  if(G.currentPlayer===0) showYourTurnBanner();
   addLog(`🚇 Route: ${route.startLabel} → ${route.endLabel}`, 'hl');
   addLog(`Play a Metrocard to enter at ${route.startLabel}.`);
   renderLog();
