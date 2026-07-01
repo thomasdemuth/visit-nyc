@@ -2165,12 +2165,14 @@ function renderPlayers() {
   const el = document.getElementById('players-list');
   el.innerHTML = G.players.map((p,i)=>{
     const active = i===G.currentPlayer;
-    const lineInfo = p.line ? lb(p.line)+(p.dir>0?'↓':'↑') : '';
+    const dirLabel = p.line ? (p.dir>0?'Uptown':'Downtown') : '';
+    const lineInfo = p.line ? `${lb(p.line)} ${p.line} · ${dirLabel}` : '';
     return `<div class="player-row ${active?'active':''}" data-pi="${i}">
       <div class="player-dot" style="background:${p.color}"></div>
       <div style="flex:1;min-width:0">
         <div class="player-name">${p.name}${p.isAI?' 🤖':''}</div>
-        <div class="player-loc">${p.station.slice(0,18)} ${lineInfo}</div>
+        ${lineInfo ? `<div class="player-loc">${lineInfo}</div>` : ''}
+        <div class="player-loc">${p.station.slice(0,22)}</div>
       </div>
     </div>`;
   }).join('');
