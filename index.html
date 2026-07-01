@@ -958,6 +958,7 @@ async function showCreateRoom() {
   await db.ref(`rooms/${code}/players/${myUid()}`).set({name:hostName,color:_hostColor,ready:false,isHost:true,joinedAt:Date.now()});
 
   MP={roomCode:code,myUid:myUid(),myPlayerIndex:0,isHost:true,config:null};
+  history.pushState({room:code},'',`?room=${code}`);
   _mpRefs=[];
 
   mpOn(db.ref(`rooms/${code}/players`),'value',snap=>renderLobbyPlayers(snap.val()||{},true));
@@ -1056,6 +1057,7 @@ async function joinRoom() {
   await db.ref(`rooms/${code}/players/${myUid()}`).set({name,color:_joinColor,ready:false,isHost:false,joinedAt:Date.now()});
   db.ref(`rooms/${code}/players/${myUid()}`).onDisconnect().remove();
   MP={roomCode:code,myUid:myUid(),myPlayerIndex:-1,isHost:false,config:null};
+  history.pushState({room:code},'',`?room=${code}`);
   _mpRefs=[];
   document.getElementById('join-step-1').style.display='none';
   document.getElementById('join-step-2').style.display='';
@@ -1094,6 +1096,7 @@ async function leaveRoom() {
   if(MP?.roomCode) await getDB().ref(`rooms/${MP.roomCode}/players/${myUid()}`).remove().catch(()=>{});
   mpOff(); stopTurnTimer();
   MP=null; _amReady=false;
+  history.replaceState({},'',location.pathname);
   showScreen('welcome');
 }
 
@@ -1280,7 +1283,9 @@ function toggleChatExpand() {
 }
 
 function checkUrlJoin() {
-  if(new URLSearchParams(location.search).get('join')) showJoinRoom();
+  const p = new URLSearchParams(location.search);
+  if(p.get('join')) showJoinRoom();
+  else if(p.get('room')) history.replaceState({},'',location.pathname);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2780,6 +2785,7 @@ function winGoHome() {
   _winCleanup();
   const svg = document.querySelector('#board-area svg');
   if(svg && baseVB) svg.setAttribute('viewBox',`${baseVB.x} ${baseVB.y} ${baseVB.w} ${baseVB.h}`);
+  history.replaceState({},'',location.pathname);
   G=null; showScreen('welcome');
 }
 
@@ -3342,6 +3348,18 @@ function initMapInteraction() {
 
 window.addEventListener('resize',()=>{ if(G&&G.players) renderTrains(); });
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+// Kick player from Firebase on page hide (reload, tab close, navigate away)
+window.addEventListener('pagehide',()=>{
+  if(!MP?.roomCode) return;
+  const url=`${FIREBASE_CONFIG.databaseURL}/rooms/${MP.roomCode}/players/${myUid()}.json`;
+  fetch(url,{method:'DELETE',keepalive:true}).catch(()=>{});
+  try{getDB().goOffline();}catch(e){}
+});
+
+// If user presses the browser back button while in a room, leave cleanly
+window.addEventListener('popstate',()=>{ if(MP?.roomCode) leaveRoom(); });
+
 window.onload=()=>{ showScreen('welcome'); initSetupUI(); checkUrlJoin(); };
 </script>
 </body>
