@@ -3075,10 +3075,12 @@ function winPlayAgain() {
 // SETUP UI
 // ═══════════════════════════════════════════════════════════════
 const TOKEN_COLORS=['#EE352E','#0039A6','#FCCC0A','#00933C','#B933AD'];
-const BOT_NAMES=['Alex','Blake','Casey','Dana','Emery'];
+const BOT_NAMES_POOL=['Alex','Blake','Casey','Dana','Emery','Jordan','Morgan','Quinn','River','Sage','Avery','Reese','Skyler','Logan','Parker'];
+let BOT_NAMES=shuffle([...BOT_NAMES_POOL]);
 let selectedColor=TOKEN_COLORS[0];
 
 function initSetupUI() {
+  BOT_NAMES = shuffle([...BOT_NAMES_POOL]);
   // Player color grid
   const grid=document.getElementById('color-grid'); grid.innerHTML='';
   TOKEN_COLORS.forEach(c=>{
@@ -3116,7 +3118,7 @@ function buildBotSetups() {
     // pick first color not taken by player or other bots
     const taken = new Set([selectedColor, ...botSetups.map(b=>b.color)]);
     const col = TOKEN_COLORS.find(c=>!taken.has(c)) || TOKEN_COLORS[(idx+1)%TOKEN_COLORS.length];
-    botSetups.push({name:'AI '+BOT_NAMES[idx%BOT_NAMES.length], color:col, difficulty:'easy'});
+    botSetups.push({name:BOT_NAMES[idx%BOT_NAMES.length], color:col, difficulty:'easy'});
   }
   botSetups = botSetups.slice(0, numOpponents);
 }
@@ -3140,7 +3142,7 @@ function renderBotRows() {
     const diffIdx = DIFF_LEVELS.indexOf(bot.difficulty);
     row.innerHTML=`
       <div class="bot-swatch" id="bot-swatch-${i}" style="background:${bot.color}"></div>
-      <div class="bot-label">AI ${BOT_NAMES[i%BOT_NAMES.length]}</div>
+      <div class="bot-label">${BOT_NAMES[i%BOT_NAMES.length]}</div>
       <div class="bot-diff-wrap">
         <input type="range" min="0" max="2" step="1" value="${diffIdx}" class="bot-diff-slider" oninput="setBotDiff(${i},this.value)">
         <div class="bot-diff-label" id="bot-diff-label-${i}">${bot.difficulty.toUpperCase()}</div>
@@ -3173,7 +3175,7 @@ async function startGame() {
   MP = null; // ensure solo mode
   const name=document.getElementById('player-name-input').value.trim()||'Player';
   const opponents = botSetups.slice(0,numOpponents).map((b,i)=>({
-    name:'AI '+BOT_NAMES[i%BOT_NAMES.length], color:b.color, difficulty:b.difficulty
+    name:BOT_NAMES[i%BOT_NAMES.length], color:b.color, difficulty:b.difficulty
   }));
   initGame(name, selectedColor, opponents);
   showScreen('game');
