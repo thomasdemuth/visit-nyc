@@ -827,7 +827,8 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
 
 <!-- MODAL -->
 <div id="modal-overlay" class="hidden">
-  <div class="modal">
+  <div class="modal" style="position:relative">
+    <button id="modal-close-x" style="display:none;position:absolute;top:10px;right:12px;background:none;border:none;color:#666;font-size:20px;cursor:pointer;line-height:1;padding:2px 6px" onmouseenter="this.style.color='#fff'" onmouseleave="this.style.color='#666'">✕</button>
     <h3 id="modal-title">Choose</h3>
     <p id="modal-desc"></p>
     <div id="modal-options" class="modal-options"></div>
@@ -2330,12 +2331,13 @@ function showModal(title, desc, opts, {cancellable=false, grid=false}={}) {
       if(!opt.disabled) b.onclick=()=>{ closeModal(); res(opt.value); };
       oc.appendChild(b);
     });
+    const xBtn = document.getElementById('modal-close-x');
     if(cancellable) {
-      const cb = document.createElement('div');
-      cb.className = 'modal-opt modal-cancel';
-      cb.textContent = '✕ Never mind';
-      cb.onclick = () => { closeModal(); res(null); };
-      oc.appendChild(cb);
+      xBtn.style.display = 'block';
+      xBtn.onclick = () => { closeModal(); res(null); };
+    } else {
+      xBtn.style.display = 'none';
+      xBtn.onclick = null;
     }
     document.getElementById('modal-overlay').classList.remove('hidden');
   });
@@ -2757,7 +2759,18 @@ function showYourTurnBanner() {
   if(!b) return;
   b.classList.add('show');
   clearTimeout(b._hideTimer);
-  b._hideTimer = setTimeout(()=>b.classList.remove('show'), 1500);
+  document.removeEventListener('click',   b._dismiss);
+  document.removeEventListener('touchend', b._dismiss);
+  b._dismiss = () => {
+    b.classList.remove('show');
+    document.removeEventListener('click',   b._dismiss);
+    document.removeEventListener('touchend', b._dismiss);
+  };
+  // Small delay so the click that ended the previous turn doesn't immediately dismiss
+  b._hideTimer = setTimeout(() => {
+    document.addEventListener('click',   b._dismiss);
+    document.addEventListener('touchend', b._dismiss);
+  }, 400);
 }
 
 function endTurn() {
