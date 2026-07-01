@@ -302,7 +302,8 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
 #chat-toggle{font-size:9px;color:#334;transition:transform .28s}
 #chat-toggle.open{transform:rotate(180deg)}
 #log{max-height:80px;overflow-y:auto;padding:5px 8px 6px;font-size:10px;color:#555;line-height:1.55;transition:max-height .28s ease,padding .28s}
-#log.collapsed{max-height:0;padding:0 8px}
+#log.collapsed{max-height:0;padding:0;overflow:hidden}
+#mp-chat-section.collapsed{max-height:0!important;overflow:hidden;padding:0;border:none}
 #log .entry{padding:1px 0;border-bottom:1px solid #0d1424}
 #log .hl{color:#FCCC0A}
 #log .good{color:#6CBE45}
@@ -1535,7 +1536,7 @@ const ROUTE_CARDS = [
   {img:'route card/Artboard 8@6x.png',  startLabel:'South Ferry',      endLabel:'Jamaica Center',    startStation:'South Ferry',               endStation:'Jamaica Center'},
   {img:'route card/Artboard 9@6x.png',  startLabel:'Inwood',           endLabel:'Jamaica 179 St',    startStation:'Inwood-207 St',             endStation:'Jamaica-179 St'},
   {img:'route card/Artboard 10@6x.png', startLabel:'Coney Island',     endLabel:'Hudson Yards',      startStation:'Coney Island-Stillwell Av', endStation:'34 St-Hudson Yards'},
-  {img:'route card/Artboard 11@6x.png', startLabel:'145 St',           endLabel:'New Lots',          startStation:'145 St',                   endStation:'New Lots Av'},
+  {img:'route card/Artboard 11@6x.png', startLabel:'145 St',           endLabel:'New Lots',          startStation:'145 St',                   endStation:'New Lots Av-3'},
   {img:'route card/Artboard 12@6x.png', startLabel:'Inwood',           endLabel:'Crown Heights',     startStation:'Inwood-207 St',             endStation:'Crown Heights-Utica Av'},
   {img:'route card/Artboard 13@6x.png', startLabel:'Prospect Park',    endLabel:'Middle Village',    startStation:'Prospect Park',             endStation:'Middle Village-Metropolitan Av'},
   {img:'route card/Artboard 14@6x.png', startLabel:'Coney Island',     endLabel:'Inwood',            startStation:'Coney Island-Stillwell Av', endStation:'Inwood-207 St'},
@@ -1548,7 +1549,7 @@ const ROUTE_CARDS = [
   {img:'route card/Artboard 21@6x.png', startLabel:'Coney Island',     endLabel:'Flushing',          startStation:'Coney Island-Stillwell Av', endStation:'Flushing-Main St'},
   {img:'route card/Artboard 22@6x.png', startLabel:'Norwood',          endLabel:'Middle Village',    startStation:'Norwood-205 St',            endStation:'Middle Village-Metropolitan Av'},
   {img:'route card/Artboard 23@6x.png', startLabel:'Coney Island',     endLabel:'Crown Heights',     startStation:'Coney Island-Stillwell Av', endStation:'Crown Heights-Utica Av'},
-  {img:'route card/Artboard 24@6x.png', startLabel:'Norwood',          endLabel:'New Lots',          startStation:'Norwood-205 St',            endStation:'New Lots Av'},
+  {img:'route card/Artboard 24@6x.png', startLabel:'Norwood',          endLabel:'New Lots',          startStation:'Norwood-205 St',            endStation:'New Lots Av-3'},
   {img:'route card/Artboard 25@6x.png', startLabel:'Hudson Yards',     endLabel:'Canarsie',          startStation:'34 St-Hudson Yards',        endStation:'Canarsie-Rockaway Pkwy'},
   {img:'route card/Artboard 26@6x.png', startLabel:'Bay Ridge',        endLabel:'Jamaica 179 St',    startStation:'Bay Ridge-95 St',           endStation:'Jamaica-179 St'},
   {img:'route card/Artboard 27@6x.png', startLabel:'Woodlawn',         endLabel:'Franklin Av',       startStation:'Woodlawn',                  endStation:'Franklin Av'},
@@ -1576,7 +1577,7 @@ const ROUTE_CARDS = [
   {img:'route card/Artboard 49@6x.png', startLabel:'East Side 2 Av',   endLabel:'Eastchester',       startStation:'East Side-2 Av',            endStation:'Eastchester-Dyre Av'},
   {img:'route card/Artboard 50@6x.png', startLabel:'Wakefield',        endLabel:'Church Av',         startStation:'Wakefield-241 St',          endStation:'Church Av'},
   {img:'route card/Artboard 51@6x.png', startLabel:'Eastchester',      endLabel:'Euclid Av',         startStation:'Eastchester-Dyre Av',       endStation:'Euclid Av'},
-  {img:'route card/Artboard 52@6x.png', startLabel:'Eastchester',      endLabel:'New Lots',          startStation:'Eastchester-Dyre Av',       endStation:'New Lots Av'},
+  {img:'route card/Artboard 52@6x.png', startLabel:'Eastchester',      endLabel:'New Lots',          startStation:'Eastchester-Dyre Av',       endStation:'New Lots Av-3'},
   {img:'route card/Artboard 53@6x.png', startLabel:'Forest Hills',     endLabel:'Broad St',          startStation:'Forest Hills-71 Av',        endStation:'Broad St'},
   {img:'route card/Artboard 54@6x.png', startLabel:'Norwood',          endLabel:'Broad St',          startStation:'Norwood-205 St',            endStation:'Broad St'},
   {img:'route card/Artboard 55@6x.png', startLabel:'South Ferry',      endLabel:'Parkchester',       startStation:'South Ferry',               endStation:'Parkchester'},
@@ -1823,6 +1824,7 @@ function snd(n) {
     case 'solution':beep(660,.1,.2);setTimeout(()=>beep(880,.14,.22),100);break;
     case 'win':     [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.28,.28),i*140));break;
     case 'discard': beep(200,.09,.18);break;
+    case 'swipe': { const a=new Audio('MetroCard swipe.mp3'); a.volume=0.8; a.play().catch(()=>{}); break; }
   }
 }
 
@@ -2223,6 +2225,10 @@ function reshuffleDiscard() {
   G.discard = [top];
   addLog('Deck reshuffled.');
 }
+function returnToDeck(card) {
+  const pos = Math.floor(Math.random()*(G.deck.length+1));
+  G.deck.splice(pos, 0, card);
+}
 
 async function playSelected() {
   if(!selectedCard||!isMyTurn()||!drawnThisTurn) return;
@@ -2250,7 +2256,7 @@ async function executeCard(card, player, isHuman) {
     case 'transfer':    await playTransfer(card, player, isHuman); break;
     case 'disturbance': await playDisturbance(card, player, isHuman); break;
     case 'solution':    await playSolution(card, player, isHuman); break;
-    default: G.discard.push(card); snd('discard');
+    default: returnToDeck(card); snd('discard');
   }
 
   const mhs = maxHandSize();
@@ -2262,7 +2268,7 @@ async function executeCard(card, player, isHuman) {
 }
 
 async function playMove(card, player, isHuman) {
-  if(player.station==='New Jersey') { addLog(`${player.name}: play a Metrocard first.`); G.discard.push(card); return; }
+  if(player.station==='New Jersey') { addLog(`${player.name}: play a Metrocard first.`); returnToDeck(card); return; }
   if(!player.line) {
     const lines = linesAt(player.station).filter(l=>LINES[l]);
     if(isHuman && lines.length>0) {
@@ -2273,26 +2279,25 @@ async function playMove(card, player, isHuman) {
         {label:lb(chosen)+' Toward '+sts[sts.length-1],value:1},
         {label:lb(chosen)+' Toward '+sts[0],value:-1}
       ]);
-    } else { G.discard.push(card); return; }
+    } else { returnToDeck(card); return; }
   }
   if(!canMove(player.line)) {
     addLog(`${player.name} is stuck! ${lb(player.line)} has a breakdown.`,'bad');
-    G.discard.push(card); return;
+    returnToDeck(card); return;
   }
   if(player.skipMove) {
     player.skipMove=false;
     addLog(`${player.name} skips move (Medical Emergency).`,'bad');
-    G.discard.push(card); return;
+    returnToDeck(card); return;
   }
   const prev=player.station;
   movePlayer(player, card.stops);
   addLog(`${player.name} moved ${card.stops} stop${card.stops>1?'s':''} → ${player.station}`,'hl');
-  snd('move'); G.discard.push(card);
+  snd('move'); returnToDeck(card);
   renderTrains(); await sleep(500);
 }
 
 async function playMetro(card, player, isHuman) {
-  snd('transfer');
   if(player.station==='New Jersey') {
     player.station = G.route.startStation;
     const lines = linesAt(G.route.startStation).filter(l=>LINES[l]&&!isBus(l));
@@ -2319,10 +2324,12 @@ async function playMetro(card, player, isHuman) {
       player.line = lines2[0]||'1'; player.dir=1;
     }
     player.metrocardPlayed=true;
+    snd('swipe');
     addLog(`${player.name} swiped Metrocard → entered at ${player.station}`,'good');
   } else {
+    snd('transfer');
     const avail = linesAt(player.station).filter(l=>LINES[l]&&l!==player.line);
-    if(avail.length===0) { addLog(`${player.name}: no transfers at ${player.station}.`); G.discard.push(card); return; }
+    if(avail.length===0) { addLog(`${player.name}: no transfers at ${player.station}.`); returnToDeck(card); return; }
     let newLine;
     if(isHuman) {
       newLine = await showModal('Transfer Lines',`Available lines at ${player.station}:`, avail.map(l=>({label:lb(l)+' '+l+' train',value:l})));
@@ -2338,7 +2345,7 @@ async function playMetro(card, player, isHuman) {
     doTransfer(player, newLine, newDir);
     addLog(`${player.name} transferred to ${lb(newLine)} ${newLine} train`,'good');
   }
-  G.discard.push(card);
+  returnToDeck(card);
   renderTrains(); await sleep(300);
 }
 
@@ -2354,7 +2361,7 @@ async function playTransfer(card, player, isHuman) {
     target = others.length>0 ? others.reduce((b,p)=>stopsTo(p,G.route.endStation)<stopsTo(b,G.route.endStation)?p:b) : player;
   }
   const avail = linesAt(target.station).filter(l=>LINES[l]&&l!==target.line);
-  if(avail.length===0) { addLog(`No alt lines for ${target.name}.`); G.discard.push(card); return; }
+  if(avail.length===0) { addLog(`No alt lines for ${target.name}.`); returnToDeck(card); return; }
   let newLine, newDir;
   if(isHuman) {
     newLine = await showModal(`Force ${target.name}`,`Switch to which line at ${target.station}?`, avail.map(l=>({label:lb(l)+' '+l,value:l})));
@@ -2366,7 +2373,7 @@ async function playTransfer(card, player, isHuman) {
   } else { newLine=avail[0]; newDir=1; }
   doTransfer(target, newLine, newDir);
   addLog(`${player.name} forced ${target.name} onto ${lb(newLine)} ${newLine}!`,'bad');
-  G.discard.push(card);
+  returnToDeck(card);
   renderAll(); await sleep(300);
 }
 
@@ -2374,7 +2381,7 @@ async function playDisturbance(card, player, isHuman) {
   snd('disturbance');
   const dtype = {Breakdown:'breakdown','Medical Emergency':'medical',Delay:'delay'}[card.label]||'breakdown';
   const available = Object.keys(LINES).filter(l=>!G.disturbances[l]&&!isBus(l));
-  if(available.length===0) { G.discard.push(card); return; }
+  if(available.length===0) { returnToDeck(card); return; }
   let target;
   if(isHuman) {
     target = await showModal(`Apply ${card.label}`,'Which line to disrupt?', available.slice(0,20).map(l=>({label:lb(l)+' '+l+' train',value:l})));
@@ -2387,7 +2394,7 @@ async function playDisturbance(card, player, isHuman) {
     G.players.filter(p=>p.line===target).forEach(p=>p.skipMove=true);
   }
   addLog(`${player.name} applied ${card.label} to ${lb(target)} line!`,'bad');
-  G.discard.push(card);
+  returnToDeck(card);
   renderDisturbances(); await sleep(300);
 }
 
@@ -2395,14 +2402,14 @@ async function playSolution(card, player, isHuman) {
   snd('solution');
   const fixes = {Handyman:'breakdown',Ambulance:'medical',Schedule:'delay'}[card.label];
   const targets = Object.entries(G.disturbances).filter(([l,d])=>d.type===fixes).map(([l])=>l);
-  if(targets.length===0) { addLog(`No ${fixes} to fix.`); G.discard.push(card); return; }
+  if(targets.length===0) { addLog(`No ${fixes} to fix.`); returnToDeck(card); return; }
   let target;
   if(isHuman) {
     target = await showModal(`Play ${card.label}`,'Clear disturbance on which line?', targets.map(l=>({label:`${lb(l)} ${l} — fix ${fixes}`,value:l})));
   } else { target=(player.line&&targets.includes(player.line))?player.line:targets[0]; }
   delete G.disturbances[target];
   addLog(`${player.name} fixed ${fixes} on ${lb(target)} line!`,'good');
-  G.discard.push(card);
+  returnToDeck(card);
   renderDisturbances(); await sleep(300);
 }
 
@@ -3093,8 +3100,10 @@ function flyCard(x0,y0,x1,y1) {
 // ═══════════════════════════════════════════════════════════════
 function toggleChat() {
   const log=document.getElementById('log');
+  const mpChat=document.getElementById('mp-chat-section');
   const icon=document.getElementById('chat-toggle');
-  log.classList.toggle('collapsed');
+  const collapsed=log.classList.toggle('collapsed');
+  if(mpChat) mpChat.classList.toggle('collapsed', collapsed);
   icon.classList.toggle('open');
 }
 
