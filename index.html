@@ -205,6 +205,9 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
 .modal-opt{padding:11px 14px;background:#1f2937;border:1px solid #374151;border-radius:8px;cursor:pointer;font-size:13px;color:#ddd;transition:all .15s;text-align:left}
 .modal-opt:hover{background:#2d3748;border-color:#FCCC0A;color:#fff}
 .modal-opt.disabled{opacity:.3;cursor:not-allowed;pointer-events:none}
+.modal-cancel{color:#666!important;text-align:center;border-style:dashed!important;background:transparent!important;margin-top:4px}
+.modal-cancel:hover{color:#aaa!important;background:#111!important;border-color:#555!important}
+.modal-grid{display:grid!important;grid-template-columns:1fr 1fr;gap:7px}
 
 /* ── WIN ── */
 #win-screen{background:rgba(0,0,0,.92);flex-direction:column;gap:22px;text-align:center;z-index:300}
@@ -228,6 +231,28 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
 #win-buttons{display:flex;gap:14px;opacity:0;transition:opacity .9s;pointer-events:none;margin-top:4px}
 #win-buttons.visible{opacity:1;pointer-events:auto}
 @keyframes win-bounce{0%{transform:scale(0) rotate(-30deg);opacity:0}60%{transform:scale(1.3) rotate(6deg);opacity:1}80%{transform:scale(.92) rotate(-2deg)}100%{transform:scale(1) rotate(0)}}
+
+/* ── SERVICE ALERTS ── */
+#service-alerts{position:absolute;top:12px;left:12px;z-index:80;display:flex;flex-direction:column;gap:5px;max-width:210px;pointer-events:none}
+.svc-alert{background:rgba(0,0,0,0.86);border-left:4px solid #EE352E;border-radius:0 8px 8px 0;padding:7px 11px;font-size:11px;color:#fff;pointer-events:auto;backdrop-filter:blur(6px)}
+.svc-breakdown{border-left-color:#EE352E}
+.svc-delay{border-left-color:#FCCC0A}
+.svc-medical{border-left-color:#0039A6}
+.svc-alert-header{font-weight:800;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:#FCCC0A;margin-bottom:3px;display:flex;align-items:center;gap:4px}
+.svc-alert-body{color:#bbb;line-height:1.4;font-size:10px}
+/* ── DISTURBANCE REVEAL ── */
+#disturbance-reveal{position:fixed;inset:0;z-index:600;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.86);cursor:pointer}
+#disturbance-reveal.active{display:flex}
+#dr-card{width:150px;border-radius:12px;box-shadow:0 0 60px rgba(200,0,0,0.4)}
+#dr-card.drop{animation:dr-drop .45s cubic-bezier(.34,1.56,.64,1) both}
+#dr-message{margin-top:20px;text-align:center;font-size:clamp(14px,2.5vw,19px);color:#eee;max-width:min(400px,85vw);line-height:1.6;opacity:0;transform:translateY(8px);transition:opacity .4s ease,transform .4s ease}
+#dr-message.vis{opacity:1;transform:translateY(0)}
+#dr-dismiss{margin-top:16px;font-size:11px;color:#666;opacity:0;transition:opacity .4s ease}
+#dr-dismiss.vis{opacity:1}
+@keyframes dr-drop{from{transform:scale(0.3) translateY(-80px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+@keyframes dr-fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* ── MAP DISTURBANCE TOOLTIP ── */
+#map-disturbance-tooltip{position:fixed;z-index:200;background:rgba(0,0,0,0.9);color:#fff;font-size:12px;padding:6px 10px;border-radius:6px;pointer-events:none;display:none;white-space:nowrap;border-left:3px solid #EE352E;max-width:260px;white-space:normal;line-height:1.4}
 
 /* ── SETUP EXTENSIONS ── */
 .opp-count-row{display:flex;gap:8px;margin-top:2px}
@@ -688,6 +713,7 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
       <div id="trains-html-layer"></div>
       <div id="badge-start" class="station-badge">START</div>
       <div id="badge-end" class="station-badge">END</div>
+      <div id="service-alerts"></div>
 
       <!-- Players list + zoom — floating bottom-left -->
       <div id="bottom-left-ctrls">
@@ -807,6 +833,15 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
     <div id="modal-options" class="modal-options"></div>
   </div>
 </div>
+
+<!-- DISTURBANCE REVEAL -->
+<div id="disturbance-reveal">
+  <img id="dr-card" src="" alt="">
+  <div id="dr-message"></div>
+  <div id="dr-dismiss">Tap anywhere to continue</div>
+</div>
+<!-- MAP HOVER TOOLTIP -->
+<div id="map-disturbance-tooltip"></div>
 
 <!-- WIN SEQUENCE -->
 <canvas id="win-confetti-canvas"></canvas>
@@ -946,16 +981,19 @@ async function showCreateRoom() {
   document.getElementById('cfg-timer-on').checked=false; document.getElementById('timer-slider-row').style.display='none';
   document.getElementById('cfg-timer-secs').value=60; document.getElementById('timer-secs-val').textContent='60s';
 
+  const _lobbyActive = () => !document.getElementById('lobby-create').classList.contains('hidden');
   const db=getDB();
   await db.ref(`rooms/${code}`).set({
     meta:{code,hostUid:myUid(),state:'lobby',created:Date.now()},
     config:{disableDisturbance:false,disableSolution:false,autoSwipe:false,handSize:5,turnTimeLimitSecs:0},
     players:{}
   });
+  if(!_lobbyActive()) { db.ref(`rooms/${code}`).remove().catch(()=>{}); return; }
   db.ref(`rooms/${code}/players/${myUid()}`).onDisconnect().remove();
 
   const hostName=document.getElementById('host-mp-name')?.value.trim()||'Host';
   await db.ref(`rooms/${code}/players/${myUid()}`).set({name:hostName,color:_hostColor,ready:false,isHost:true,joinedAt:Date.now()});
+  if(!_lobbyActive()) return;
 
   MP={roomCode:code,myUid:myUid(),myPlayerIndex:0,isHost:true,config:null};
   history.pushState({room:code},'',`?room=${code}`);
@@ -1149,13 +1187,21 @@ function _attachMPListeners(roomCode,playerList,config) {
     if(snap.val()==='playing') await _startMPPlayPhase(roomCode,playerList,config);
   });
   // Live gameState updates
-  mpOn(db.ref(`rooms/${roomCode}/gameState`),'value',snap=>{
+  mpOn(db.ref(`rooms/${roomCode}/gameState`),'value',async snap=>{
     const data=snap.val(); if(!data||!G.players) return;
     if(isMyTurn()) return; // we're the source of truth on our turn
     const prevTurn=G.currentPlayer;
+    const prevLastDist=G.lastDisturbance;
     Object.assign(G,data);
     _stationLines=null; _lineDistFor=null;
     drawnThisTurn=false; selectedCard=null;
+    // Show disturbance reveal for players who didn't play the card
+    if(data.lastDisturbance && data.lastDisturbance.ts !== (prevLastDist?.ts ?? -1)) {
+      if(data.lastDisturbance.by !== myPlayer()?.name) {
+        const d=data.lastDisturbance;
+        await showDisturbanceReveal(null, {name:d.by}, d.line, d.type);
+      }
+    }
     const winP = G.players.find(p=>checkWin(p));
     if(winP && !document.getElementById('win-overlay').classList.contains('active')) { triggerWin(winP); return; }
     renderAll(); updateTurnGlow();
@@ -1556,6 +1602,12 @@ const SVG_STATIONS = {
   'World Trade Ctr-Cortlandt St': {x:1226, y:1787},
   'York St': {x:1581, y:1760},
   'Zerega Av': {x:1706, y:877},
+  'Bleecker St-Lafayette St': {x:1402, y:1617},
+  'Court Sq':                 {x:1592, y:1400},
+  'Grand St':                 {x:1286, y:1650},
+  'Hudson Yards':             {x:1069, y:1474},
+
+  'Parkchester-E177 St':      {x:1678, y:906},
 };
 
 const ROUTE_CARDS = [
@@ -1694,25 +1746,25 @@ const LINES = {
   '4':{stations:['Woodlawn','Bedford Park Blvd-Lehman College','Burnside Av','176 St','Mt Eden Av','167 St','161 St-Yankee Stadium','125 St-Lexington Av','86 St','59 St','Grand Central-42 St','14 St-Union Sq','Bklyn Brg-City Hall','Fulton St','Wall St','Bowling Green','Court St-Borough Hall','Atlantic Av-Pacific St','Franklin Av-Botanic Garden','Crown Heights-Utica Av']},
   // 5 — IRT Dyre Av / Lex express; no West Farms or Pelham stops
   '5':{stations:['Eastchester-Dyre Av','Morris Park','E 180 St','Freeman St','Jackson Av','3 Av-South Bronx','149 St-Grand Concourse','125 St-Lexington Av','86 St','59 St','Grand Central-42 St','14 St-Union Sq','Bklyn Brg-City Hall','Fulton St','Wall St','Bowling Green']},
-  '6':{stations:['Bklyn Brg-City Hall','Canal St-4','Astor Place','23 St-4','33 St','Grand Central-42 St','53 St','59 St','77 St','86 St','96 St','110 St-4','125 St-Lexington Av','Cypress Av','Longwood Av','Hunts Point Av','Elder Av','Parkchester','Zerega Av','Buhre Av','Pelham Bay Park']},
-  '7':{stations:['34 St-Hudson Yards','Times Sq-42 St','47-50 Sts-Rockefeller Ctr','Grand Central-42 St','Vernon Blvd-Jackson Av','Court Sq-23 St','Queensboro Plaza','Queens Plaza','33 St-Rawson St','46 St-Bliss','69 St','Jackson Hts-Roosevelt Av','Junction Blvd','Mets-Willets Pt','Flushing-Main St']},
-  'A':{stations:['Inwood-207 St','190 St','175 St','168 St','163 St-Amsterdam Av','145 St','135 St','125 St-St Nicholas Av','Cathedral Pkwy','103 St','86 St-A','81 St-Museum of Natural History','72 St','59 St-Columbus Circle','23 St-A','14 St-8 Av','Christopher St-Sheridan Sq','W 4 St-Washington Square','Spring St','Canal St','Park Place','Cortlandt St','Fulton St','Jay St-MetroTech','Hoyt St','Lafayette Av','Franklin Av','Utica Av','Ralph Av','Rockaway Av','Broadway Junction','Liberty Av','Shepherd Av','Euclid Av','Grant Av','88 St','Rockaway Blvd','Ozone Park-Lefferts Blvd']},
-  'B':{stations:['155 St','145 St','135 St','125 St-St Nicholas Av','Cathedral Pkwy','103 St','86 St-A','81 St-Museum of Natural History','72 St','59 St-Columbus Circle','7 Av','34 St-Herald Sq','23 St','14 St-6 Av','W 4 St-Washington Square','Spring St','East Side-2 Av']},
-  'C':{stations:['155 St','145 St','135 St','125 St-St Nicholas Av','Cathedral Pkwy','103 St','86 St-A','81 St-Museum of Natural History','72 St','59 St-Columbus Circle','23 St-A','14 St-8 Av','W 4 St-Washington Square','Spring St','Canal St','Park Place','Cortlandt St','Fulton St','Jay St-MetroTech','Hoyt St','Lafayette Av','Franklin Av','Utica Av','Ralph Av','Rockaway Av','Broadway Junction','Liberty Av','Shepherd Av','Euclid Av']},
-  'D':{stations:['Norwood-205 St','Bedford Park Blvd','Tremont Av','174-175 Sts','167 St','155 St','145 St','135 St','125 St-St Nicholas Av','Cathedral Pkwy','103 St','86 St-A','81 St-Museum of Natural History','72 St','59 St-Columbus Circle','7 Av','57 St','34 St-Herald Sq','23 St','W 4 St-Washington Square','Bklyn Brg-City Hall-D','Dekalb Av','Atlantic Av-Pacific St','Union St','4 Av-9 St','36 St','59 St-D','9 Av','62 St','Bay Pkwy-D','Coney Island-Stillwell Av']},
-  'E':{stations:['World Trade Center','Canal St','Spring St','W 4 St-Washington Square','14 St-6 Av','14 St-8 Av','23 St-A','7 Av','53 St','Court Sq-23 St','Queens Plaza','Jackson Hts-Roosevelt Av','Grand Av-Newtown','Woodhaven Blvd','63 Dr-Rego Park','Forest Hills-71 Av','Kew Gardens-Union Tpke','Sutphin Blvd-Archer Av-JFK','Jamaica Center']},
-  'F':{stations:['Jamaica-179 St','Parsons Blvd','Kew Gardens-Union Tpke','Forest Hills-71 Av','63 Dr-Rego Park','Woodhaven Blvd','Grand Av-Newtown','Jackson Hts-Roosevelt Av','46 St','Queens Plaza','Court Sq-23 St','53 St','34 St-Herald Sq','23 St','W 4 St-Washington Square','York St','Jay St-MetroTech','Bergen St','Smith St','4 Av-9 St','Church Av','Bay Pkwy','Kings Hwy','Coney Island-Stillwell Av']},
-  'G':{stations:['Court Sq-23 St','Greenpoint Av','Lorimer St-Metropolitan Av','Broadway-G','Flushing Av','Bedford-Nostrand Avs','Hoyt St','Bergen St','Smith St','4 Av-9 St','Church Av']},
-  'J':{stations:['Broad St','Fulton St','Bklyn Brg-City Hall','Delancey St-Essex St','Marcy Av','Hewes St','Myrtle Av-Broadway','Gates Av','Chauncey St','Broadway Junction','Van Siclen Av','Norwood Av','Cypress Hills','Woodhaven Blvd-J','111 St','Sutphin Blvd-Archer Av-JFK','Jamaica Center']},
-  'L':{stations:['14 St-8 Av','14 St-6 Av','14 St-Union Sq','3 Av','1 Av','Lorimer St-Metropolitan Av','Montrose Av','Jefferson St','Fresh Pond Rd','Halsey St','Wilson Av','Broadway Junction','Sutter Av','Junius St-Livonia Av','New Lots Av','Canarsie-Rockaway Pkwy']},
-  'M':{stations:['Middle Village-Metropolitan Av','Myrtle Av-Wyckoff Av','Fresh Pond Rd','Central Av','Myrtle Av-Broadway','Hewes St','Marcy Av','Delancey St-Essex St','East Side-2 Av']},
+  '6':{stations:['Parkchester-E177 St','Elder Av','Hunts Point Av','Longwood Av','Cypress Av','3 Av-South Bronx','125 St-Lexington Av','110 St-4','96 St','86 St','77 St','59 St','53 St','Grand Central-42 St','33 St','23 St-4','14 St-Union Sq','Astor Place','Bleecker St-Lafayette St','Canal St-4','Bklyn Brg-City Hall']},
+  '7':{stations:['Flushing-Main St','Mets-Willets Pt','Junction Blvd','Jackson Hts-Roosevelt Av','69 St','46 St-Bliss','33 St-Rawson St','Queensboro Plaza','Court Sq-23 St','Vernon Blvd-Jackson Av','Grand Central-42 St','5 Av','Times Sq-42 St','Hudson Yards']},
+  'A':{stations:['Inwood-207 St','190 St','175 St','168 St','163 St-Amsterdam Av','145 St','125 St-St Nicholas Av','59 St-Columbus Circle','Times Sq-42 St','34 St-Penn Station','14 St-8 Av','W 4 St-Washington Square','Canal St','Park Place','Fulton St','Jay St-MetroTech','Hoyt St','Utica Av','Broadway Junction','Euclid Av','Grant Av','88 St','Rockaway Blvd','Ozone Park-Lefferts Blvd']},
+  'B':{stations:['145 St','135 St','125 St-St Nicholas Av','Cathedral Pkwy','103 St','86 St-A','81 St-Museum of Natural History','72 St','59 St-Columbus Circle','7 Av','47-50 Sts-Rockefeller Ctr','34 St-Herald Sq','W 4 St-Washington Square','Bleecker St-Lafayette St','East Side-2 Av']},
+  'C':{stations:['145 St','135 St','125 St-St Nicholas Av','Cathedral Pkwy','103 St','86 St-A','81 St-Museum of Natural History','72 St','59 St-Columbus Circle','Times Sq-42 St','34 St-Penn Station','23 St-A','14 St-8 Av','W 4 St-Washington Square','Spring St','Canal St','Park Place','Fulton St','Jay St-MetroTech','Hoyt St','Lafayette Av','Franklin Av','Utica Av','Ralph Av','Rockaway Av','Broadway Junction','Liberty Av','Shepherd Av','Euclid Av']},
+  'D':{stations:['Norwood-205 St','Bedford Park Blvd','Tremont Av','174-175 Sts','167 St','161 St-Yankee Stadium','155 St','145 St','125 St-St Nicholas Av','59 St-Columbus Circle','7 Av','47-50 Sts-Rockefeller Ctr','34 St-Herald Sq','W 4 St-Washington Square','Bleecker St-Lafayette St','Grand St','Atlantic Av-Pacific St','36 St','62 St','Bay Pkwy-D','9 Av','Coney Island-Stillwell Av']},
+  'E':{stations:['Jamaica Center','Sutphin Blvd-Archer Av-JFK','Kew Gardens-Union Tpke','Forest Hills-71 Av','Jackson Hts-Roosevelt Av','Queens Plaza','Court Sq','53 St','7 Av','Times Sq-42 St','34 St-Penn Station','23 St-A','14 St-8 Av','W 4 St-Washington Square','Spring St','Canal St','World Trade Center']},
+  'F':{stations:['Jamaica-179 St','Parsons Blvd','Kew Gardens-Union Tpke','Forest Hills-71 Av','Jackson Hts-Roosevelt Av','Queens Plaza','Court Sq','53 St','47-50 Sts-Rockefeller Ctr','34 St-Herald Sq','23 St','14 St-6 Av','W 4 St-Washington Square','Bleecker St-Lafayette St','East Side-2 Av','Delancey St-Essex St','York St','Jay St-MetroTech','Bergen St','Smith St','4 Av-9 St','Church Av','Bay Pkwy','Kings Hwy','Coney Island-Stillwell Av']},
+  'G':{stations:['Court Sq','Greenpoint Av','Lorimer St-Metropolitan Av','Broadway-G','Flushing Av','Bedford-Nostrand Avs','Hoyt St','Bergen St','Smith St','4 Av-9 St','Church Av']},
+  'J':{stations:['Jamaica Center','Sutphin Blvd-Archer Av-JFK','111 St','Woodhaven Blvd-J','Cypress Hills','Norwood Av','Van Siclen Av','Broadway Junction','Chauncey St','Gates Av','Myrtle Av-Broadway','Hewes St','Marcy Av','Delancey St-Essex St','Canal St-4','Bklyn Brg-City Hall','Fulton St','Broad St']},
+  'L':{stations:['14 St-8 Av','14 St-6 Av','14 St-Union Sq','3 Av','1 Av','Lorimer St-Metropolitan Av','Montrose Av','Jefferson St','Myrtle Av-Wyckoff Av','Halsey St','Wilson Av','Broadway Junction','Sutter Av','Junius St-Livonia Av','New Lots Av','Canarsie-Rockaway Pkwy']},
+  'M':{stations:['Forest Hills-71 Av','63 Dr-Rego Park','Woodhaven Blvd','Grand Av-Newtown','Jackson Hts-Roosevelt Av','46 St','Steinway St','36 St-R','21 St-Queensbridge','63 St-Lexington Av','57 St','47-50 Sts-Rockefeller Ctr','34 St-Herald Sq','23 St','14 St-6 Av','W 4 St-Washington Square','Bleecker St-Lafayette St','Delancey St-Essex St','Marcy Av','Hewes St','Myrtle Av-Broadway','Central Av','Myrtle Av-Wyckoff Av','Fresh Pond Rd','Middle Village-Metropolitan Av']},
   'N':{stations:['Astoria-Ditmars Blvd','Astoria Blvd','Broadway','39 Av-Dutch Kills','Queensboro Plaza','21 St-Queensbridge','63 St-Lexington Av','59 St','5 Av','57 St','34 St-Herald Sq','23 St','28 St','14 St-Union Sq','8 St-NYU','Canal St-4','Bklyn Brg-City Hall-D','Dekalb Av','Atlantic Av-Pacific St','Grand Army Plaza','Prospect Park','Newkirk Plaza','Kings Hwy-N','Brighton Beach','Coney Island-Stillwell Av']},
   'Q':{stations:['125 St-2 Av','106 St','86 St-Q','63 St-Lexington Av','77 St','34 St-Herald Sq','23 St','28 St','8 St-NYU','Cortlandt St','South Ferry']},
   'R':{stations:['Forest Hills-71 Av','63 Dr-Rego Park','Woodhaven Blvd','Grand Av-Newtown','Jackson Hts-Roosevelt Av','46 St','Steinway St','36 St-R','Queens Plaza','Queensboro Plaza','59 St','5 Av','57 St','34 St-Herald Sq','28 St','14 St-Union Sq','8 St-NYU','Court St-Borough Hall','Dekalb Av','Jay St-MetroTech']},
   'S':{stations:['Franklin Av','Franklin Av-Botanic Garden','Prospect Park']},
   'W':{stations:['Astoria-Ditmars Blvd','Astoria Blvd','Broadway','39 Av-Dutch Kills','Queens Plaza','Queensboro Plaza','59 St','5 Av','57 St','34 St-Herald Sq','28 St','14 St-Union Sq','8 St-NYU','Canal St-4','Bklyn Brg-City Hall-D','Dekalb Av','Atlantic Av-Pacific St','Union St','4 Av-9 St','36 St','59 St-D','Bay Ridge-95 St']},
   'Z':{stations:['Broad St','Fulton St','Bklyn Brg-City Hall','Delancey St-Essex St','Marcy Av','Hewes St','Myrtle Av-Broadway','Gates Av','Chauncey St','Broadway Junction','Van Siclen Av','Norwood Av','Cypress Hills','Woodhaven Blvd-J','111 St','Sutphin Blvd-Archer Av-JFK','Jamaica Center']},
-  '8':{stations:['3 Av-South Bronx','Hunts Point Av','Parkchester','Zerega Av','Buhre Av','Pelham Bay Park']},
+  '8':{stations:['Pelham Bay Park','Parkchester-E177 St','Hunts Point Av','3 Av-South Bronx']},
   // Bus lines — connect existing subway stations, no SVG path of their own
   'Bx36':{stations:['Pelham Bay Park','West Farms Sq-E Tremont Av','Tremont Av']},
   'M60':{stations:['125 St-Broadway','125 St-St Nicholas Av','125 St-Lexington Av','125 St-2 Av','Astoria Blvd']},
@@ -1721,6 +1773,29 @@ const LINES = {
   'B46':{stations:['Utica Av','Crown Heights-Utica Av']},
   'Q53':{stations:['Woodhaven Blvd','Woodhaven Blvd-J','Rockaway Blvd']},
 };
+
+// Station complexes connected by underground passageways.
+// Players at any station in a group can transfer to lines at the others.
+const PASSAGEWAYS = [
+  ['World Trade Center', 'Park Place', 'Cortlandt St'],   // WTC / Fulton complex
+  ['Court Sq', 'Court Sq-23 St'],                         // Long Island City hub
+  ['Broadway-G', 'Hewes St'],                             // Williamsburg: G ↔ M/J/Z
+  ['Atlantic Av-Pacific St', 'Bergen St'],                // Park Slope hub: D/N/Q/2/3/4 ↔ F/G
+  ['161 St-Yankee Stadium', '149 St-Grand Concourse'],    // Bronx hub: 4/D ↔ 2/5
+];
+const _pgLookup = {};
+PASSAGEWAYS.forEach(g => g.forEach(s => (_pgLookup[s] = g)));
+function connectedStations(station) { return _pgLookup[station] || [station]; }
+// Returns [{line, via}] — all lines reachable from `station`, including passageway neighbours.
+function linesAtOrNear(station, excludeLine) {
+  const seen = new Set(); const res = [];
+  connectedStations(station).forEach(s => {
+    linesAt(s).filter(l => LINES[l] && l !== excludeLine).forEach(l => {
+      if(!seen.has(l)) { seen.add(l); res.push({line:l, via:s}); }
+    });
+  });
+  return res;
+}
 
 // ═══════════════════════════════════════════════════════════════
 // CARD DATA
@@ -1792,7 +1867,7 @@ function initGame(playerName, color, opponents, config) {
   ];
   // Don't deal cards here — intro animation deals them
   const discard = [deck.pop()];
-  G = {players,deck,discard,route,currentPlayer:0,disturbances:{},log:[],startTime:Date.now()};
+  G = {players,deck,discard,route,currentPlayer:0,disturbances:{},log:[],startTime:Date.now(),lastDisturbance:null};
   drawnThisTurn = false; selectedCard = null;
 }
 
@@ -1826,11 +1901,12 @@ function stopsTo(player, dest) {
   return Math.abs(b-a);
 }
 
-function doTransfer(player, newLine, newDir) {
+function doTransfer(player, newLine, newDir, viaStation) {
+  // Move through passageway to the station that actually serves the new line
+  if(viaStation && viaStation !== player.station) player.station = viaStation;
   const sts = getStations(newLine);
   const idx = sts.indexOf(player.station);
   if(idx<0) {
-    // try to find matching name prefix
     const close = sts.find(s=>s.startsWith(player.station.split('-')[0])) || sts[0];
     player.station = close;
   }
@@ -1867,6 +1943,12 @@ function snd(n) {
     case 'win':     [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.28,.28),i*140));break;
     case 'discard': beep(200,.09,.18);break;
     case 'swipe': { const a=new Audio('MetroCard swipe.mp3'); a.volume=0.8; a.play().catch(()=>{}); break; }
+    case 'tension': {
+      // Ominous descending sequence for disturbance card reveal
+      [[200,0],[170,220],[145,440],[115,680],[88,980]].forEach(([freq,delay])=>
+        setTimeout(()=>beep(freq,.55,.32,'sawtooth'),delay));
+      break;
+    }
   }
 }
 
@@ -1984,32 +2066,98 @@ function renderTrains() {
 }
 
 function renderDisturbances() {
-  // Reset all tagged line paths to original colors
+  // Remove white overlay paths from previous call
+  document.querySelectorAll('#board-area svg .disturb-overlay').forEach(p=>p.remove());
+  // Reset all game-line paths
   document.querySelectorAll('#board-area svg .game-line').forEach(p => {
     const orig = p.dataset.origColor;
     if(orig) p.setAttribute('stroke', orig);
     p.removeAttribute('stroke-dasharray');
     p.style.opacity = '1';
+    p.onmousemove = null;
+    p.onmouseleave = null;
   });
 
-  // Build color → subway-lines reverse map (exclude bus lines)
+  const tooltip = document.getElementById('map-disturbance-tooltip');
+
+  // Build color → subway-lines reverse map (exclude buses)
   const colorToLines = {};
   Object.entries(LINE_SVG_COLORS).forEach(([line, color]) => {
     if(!isBus(line)) (colorToLines[color] = colorToLines[color]||[]).push(line);
   });
 
-  // Only grey a color group when ALL lines sharing that color are disrupted.
-  // A single disrupted line (e.g. A but not C or E) shows in the log/UI only.
-  const disturbed = new Set(Object.keys(G.disturbances));
+  const distSet = new Set(Object.keys(G.disturbances));
+
   Object.entries(colorToLines).forEach(([color, lines]) => {
-    if(lines.every(l => disturbed.has(l))) {
-      (svgLinePathsByColor[color]||[]).forEach(p => {
+    // Only apply SVG visual when ALL lines in the color group are disrupted
+    if(!lines.every(l => distSet.has(l))) return;
+
+    const disruptedData = lines.map(l => G.disturbances[l]);
+    const allDelay = disruptedData.every(d => d.type === 'delay');
+
+    // Tooltip text listing all disrupted lines in this group
+    const tipText = lines.map(l => {
+      const d = G.disturbances[l];
+      const t = d.type==='breakdown'?'Breakdown':d.type==='medical'?'Medical':d.type==='delay'?'Delay':d.type;
+      return `${l}: ${t} (by ${d.by})`;
+    }).join(' · ');
+
+    const paths = svgLinePathsByColor[color] || [];
+    paths.forEach(p => {
+      if(allDelay) {
+        // Delay: keep original color, add dash pattern to signal slowdown
+        p.setAttribute('stroke-dasharray', '16 5');
+        p.style.opacity = '0.82';
+      } else {
+        // Breakdown / Medical: grey out + white center-stripe overlay
         p.setAttribute('stroke', '#3a3a3a');
-        p.setAttribute('stroke-dasharray', '12 6');
-        p.style.opacity = '0.4';
-      });
-    }
+        p.removeAttribute('stroke-dasharray');
+        p.style.opacity = '0.55';
+        const origW = parseFloat(p.getAttribute('stroke-width') || '6');
+        const ov = p.cloneNode(false);
+        ov.setAttribute('stroke', 'rgba(255,255,255,0.55)');
+        ov.setAttribute('stroke-width', String(Math.max(1.5, origW * 0.3)));
+        ov.removeAttribute('stroke-dasharray');
+        ov.classList.remove('game-line');
+        ov.classList.add('disturb-overlay');
+        ov.style.pointerEvents = 'none';
+        ov.style.opacity = '1';
+        p.parentNode.insertBefore(ov, p.nextSibling);
+      }
+      // Hover tooltip on affected paths
+      if(tooltip) {
+        p.onmousemove = (e) => {
+          tooltip.style.display = 'block';
+          tooltip.style.left = (e.clientX + 14) + 'px';
+          tooltip.style.top = (e.clientY - 44) + 'px';
+          tooltip.style.borderLeftColor = allDelay ? '#FCCC0A' : '#EE352E';
+          tooltip.textContent = tipText;
+        };
+        p.onmouseleave = () => { tooltip.style.display = 'none'; };
+      }
+    });
   });
+
+  _renderServiceAlerts();
+}
+
+function capitalize(s) { return s ? s[0].toUpperCase()+s.slice(1) : ''; }
+
+function _renderServiceAlerts() {
+  const el = document.getElementById('service-alerts');
+  if(!el) return;
+  const entries = Object.entries(G.disturbances||{});
+  if(!entries.length) { el.innerHTML=''; return; }
+  el.innerHTML = entries.map(([line, d]) => {
+    const m = LINE_META[line]||{color:'#555',text:'#fff'};
+    const icon = d.type==='breakdown'?'🔴':d.type==='delay'?'🟡':'🔵';
+    const desc = d.type==='breakdown'?'No service — Breakdown':d.type==='medical'?'Medical emergency — stops skipped':'Delays in effect';
+    const remedy = d.type==='breakdown'?'Handyman':d.type==='medical'?'Ambulance':'Schedule';
+    return `<div class="svc-alert svc-${d.type}">
+      <div class="svc-alert-header"><span class="line-badge" style="background:${m.color};color:${m.text};font-size:10px;padding:1px 6px;border-radius:3px">${line}</span> ${icon} ${d.type.toUpperCase()}</div>
+      <div class="svc-alert-body">${desc}<br><em>Use ${remedy} to clear</em></div>
+    </div>`;
+  }).join('');
 }
 
 function renderPlayers() {
@@ -2037,7 +2185,15 @@ function renderHand() {
   const maxA = FAN*(n-1)/2;
   const isMyTurnNow = isMyTurn();
 
-  p.hand.forEach((card,i)=>{
+  const TYPE_ORDER = {distance:0,metrocard:1,transfer:2,disturbance:3,solution:4};
+  const sortedHand = [...p.hand].sort((a,b)=>{
+    const ao=TYPE_ORDER[a.type]??5, bo=TYPE_ORDER[b.type]??5;
+    if(ao!==bo) return ao-bo;
+    if(a.type==='distance') return (parseInt(a.label)||0)-(parseInt(b.label)||0);
+    return 0;
+  });
+
+  sortedHand.forEach((card,i)=>{
     const rot = -maxA + i*FAN;
     const div = document.createElement('div');
     div.className = 'hand-card'+(selectedCard===card?' selected':'');
@@ -2160,12 +2316,13 @@ function renderAll() {
 // ═══════════════════════════════════════════════════════════════
 // MODAL
 // ═══════════════════════════════════════════════════════════════
-function showModal(title, desc, opts) {
+function showModal(title, desc, opts, {cancellable=false, grid=false}={}) {
   return new Promise(res=>{
     document.getElementById('modal-title').textContent = title;
     document.getElementById('modal-desc').textContent = desc||'';
     const oc = document.getElementById('modal-options');
     oc.innerHTML = '';
+    oc.className = 'modal-options' + (grid ? ' modal-grid' : '');
     opts.forEach(opt=>{
       const b = document.createElement('div');
       b.className = 'modal-opt'+(opt.disabled?' disabled':'');
@@ -2173,6 +2330,13 @@ function showModal(title, desc, opts) {
       if(!opt.disabled) b.onclick=()=>{ closeModal(); res(opt.value); };
       oc.appendChild(b);
     });
+    if(cancellable) {
+      const cb = document.createElement('div');
+      cb.className = 'modal-opt modal-cancel';
+      cb.textContent = '✕ Never mind';
+      cb.onclick = () => { closeModal(); res(null); };
+      oc.appendChild(cb);
+    }
     document.getElementById('modal-overlay').classList.remove('hidden');
   });
 }
@@ -2379,22 +2543,26 @@ async function playMetro(card, player, isHuman) {
     addLog(`${player.name} swiped Metrocard → entered at ${player.station}`,'good');
   } else {
     snd('transfer');
-    const avail = linesAt(player.station).filter(l=>LINES[l]&&l!==player.line);
+    const avail = linesAtOrNear(player.station, player.line);
     if(avail.length===0) { addLog(`${player.name}: no transfers at ${player.station}.`); returnToDeck(card); return; }
-    let newLine;
+    let choice;
     if(isHuman) {
-      newLine = await showModal('Transfer Lines',`Available lines at ${player.station}:`, avail.map(l=>({label:lb(l)+' '+l+' train',value:l})));
-    } else { newLine=avail[0]; }
-    const sts=getStations(newLine);
+      choice = await showModal('Transfer Lines',`Available lines at ${player.station}:`,
+        avail.map(r=>({label:lb(r.line)+' '+r.line+' train'+(r.via!==player.station?' (passageway)':''), value:r})),
+        {cancellable:true});
+      if(choice===null) { returnToDeck(card); return; }
+    } else { choice=avail[0]; }
+    const sts=getStations(choice.line);
     let newDir;
     if(isHuman) {
-      newDir = await showModal('Choose Direction',`Direction on ${newLine}?`,[
-        {label:lb(newLine)+' Toward '+sts[sts.length-1],value:1},
-        {label:lb(newLine)+' Toward '+sts[0],value:-1}
+      newDir = await showModal('Choose Direction',`Direction on ${choice.line}?`,[
+        {label:lb(choice.line)+' Toward '+sts[sts.length-1],value:1},
+        {label:lb(choice.line)+' Toward '+sts[0],value:-1}
       ]);
+      if(newDir===null) { returnToDeck(card); return; }
     } else { newDir=1; }
-    doTransfer(player, newLine, newDir);
-    addLog(`${player.name} transferred to ${lb(newLine)} ${newLine} train`,'good');
+    doTransfer(player, choice.line, newDir, choice.via);
+    addLog(`${player.name} transferred to ${lb(choice.line)} ${choice.line} train`,'good');
   }
   returnToDeck(card);
   renderTrains(); await sleep(300);
@@ -2411,19 +2579,23 @@ async function playTransfer(card, player, isHuman) {
     const others = G.players.filter(p=>p!==player&&p.station!=='New Jersey');
     target = others.length>0 ? others.reduce((b,p)=>stopsTo(p,G.route.endStation)<stopsTo(b,G.route.endStation)?p:b) : player;
   }
-  const avail = linesAt(target.station).filter(l=>LINES[l]&&l!==target.line);
+  const avail = linesAtOrNear(target.station, target.line);
   if(avail.length===0) { addLog(`No alt lines for ${target.name}.`); returnToDeck(card); return; }
-  let newLine, newDir;
+  let choice, newDir;
   if(isHuman) {
-    newLine = await showModal(`Force ${target.name}`,`Switch to which line at ${target.station}?`, avail.map(l=>({label:lb(l)+' '+l,value:l})));
-    const sts=getStations(newLine);
+    choice = await showModal(`Force ${target.name}`,`Switch to which line at ${target.station}?`,
+      avail.map(r=>({label:lb(r.line)+' '+r.line+(r.via!==target.station?' (passageway)':''), value:r})),
+      {cancellable:true});
+    if(choice===null) { returnToDeck(card); return; }
+    const sts=getStations(choice.line);
     newDir = await showModal('Set Direction',`Direction for ${target.name}?`,[
-      {label:lb(newLine)+' Toward '+sts[sts.length-1],value:1},
-      {label:lb(newLine)+' Toward '+sts[0],value:-1}
+      {label:lb(choice.line)+' Toward '+sts[sts.length-1],value:1},
+      {label:lb(choice.line)+' Toward '+sts[0],value:-1}
     ]);
-  } else { newLine=avail[0]; newDir=1; }
-  doTransfer(target, newLine, newDir);
-  addLog(`${player.name} forced ${target.name} onto ${lb(newLine)} ${newLine}!`,'bad');
+    if(newDir===null) { returnToDeck(card); return; }
+  } else { choice=avail[0]; newDir=1; }
+  doTransfer(target, choice.line, newDir, choice.via);
+  addLog(`${player.name} forced ${target.name} onto ${lb(choice.line)} ${choice.line}!`,'bad');
   returnToDeck(card);
   renderAll(); await sleep(300);
 }
@@ -2435,15 +2607,18 @@ async function playDisturbance(card, player, isHuman) {
   if(available.length===0) { returnToDeck(card); return; }
   let target;
   if(isHuman) {
-    target = await showModal(`Apply ${card.label}`,'Which line to disrupt?', available.slice(0,20).map(l=>({label:lb(l)+' '+l+' train',value:l})));
+    target = await showModal(`Apply ${card.label}`,'Which line to disrupt?', available.slice(0,20).map(l=>({label:lb(l)+' '+l,value:l})), {cancellable:true, grid:true});
+    if(target===null) { returnToDeck(card); return; }
   } else {
     const hl = G.players[0].line;
     target = (hl&&available.includes(hl)) ? hl : available[0];
   }
   G.disturbances[target] = {type:dtype, by:player.name};
+  G.lastDisturbance = {line:target, type:dtype, by:player.name, ts:Date.now()};
   if(dtype==='medical') {
     G.players.filter(p=>p.line===target).forEach(p=>p.skipMove=true);
   }
+  await showDisturbanceReveal(card, player, target, dtype);
   addLog(`${player.name} applied ${card.label} to ${lb(target)} line!`,'bad');
   returnToDeck(card);
   renderDisturbances(); await sleep(300);
@@ -2452,16 +2627,74 @@ async function playDisturbance(card, player, isHuman) {
 async function playSolution(card, player, isHuman) {
   snd('solution');
   const fixes = {Handyman:'breakdown',Ambulance:'medical',Schedule:'delay'}[card.label];
+  const typeLabel = {breakdown:'Breakdowns',medical:'Medical Emergencies',delay:'Delays'}[fixes]||fixes;
   const targets = Object.entries(G.disturbances).filter(([l,d])=>d.type===fixes).map(([l])=>l);
-  if(targets.length===0) { addLog(`No ${fixes} to fix.`); returnToDeck(card); return; }
+  if(targets.length===0) {
+    if(isHuman) {
+      const ok = await showModal(`No ${typeLabel} Active`,
+        `There are no active ${typeLabel.toLowerCase()} right now. Discard this card instead?`,
+        [{label:'Discard card', value:true}], {cancellable:true});
+      if(ok) { G.discard.push(card); snd('discard'); addLog(`${player.name} discarded ${card.label} (nothing to fix).`); }
+      else returnToDeck(card);
+    } else { addLog(`No ${fixes} to fix.`); returnToDeck(card); }
+    return;
+  }
   let target;
   if(isHuman) {
-    target = await showModal(`Play ${card.label}`,'Clear disturbance on which line?', targets.map(l=>({label:`${lb(l)} ${l} — fix ${fixes}`,value:l})));
+    target = await showModal(`Play ${card.label}`,'Clear disturbance on which line?',
+      targets.map(l=>({label:`${lb(l)} ${l}`,value:l})), {cancellable:true, grid:true});
+    if(target===null) { returnToDeck(card); return; }
   } else { target=(player.line&&targets.includes(player.line))?player.line:targets[0]; }
   delete G.disturbances[target];
   addLog(`${player.name} fixed ${fixes} on ${lb(target)} line!`,'good');
   returnToDeck(card);
   renderDisturbances(); await sleep(300);
+}
+
+async function showDisturbanceReveal(card, player, targetLine, dtype) {
+  snd('tension');
+  const remedy = {breakdown:'Handyman', medical:'Ambulance', delay:'Schedule'}[dtype] || 'Schedule';
+  const typeLabel = {breakdown:'Breakdown', medical:'Medical Emergency', delay:'Delay'}[dtype] || dtype;
+  const el = document.getElementById('disturbance-reveal');
+  const cardImg = document.getElementById('dr-card');
+  const msgEl = document.getElementById('dr-message');
+  const dismissEl = document.getElementById('dr-dismiss');
+  if(cardImg) {
+    if(card?.img) {
+      cardImg.src = card.img;
+      cardImg.style.display = 'block';
+      cardImg.classList.remove('drop');
+      cardImg.offsetWidth; // force reflow to restart animation
+      cardImg.classList.add('drop');
+    } else {
+      cardImg.style.display = 'none';
+    }
+  }
+  const m = LINE_META[targetLine]||{color:'#555',text:'#fff'};
+  if(msgEl) {
+    msgEl.innerHTML = `<strong>${player.name}</strong> played a <strong>${typeLabel}</strong> on the ` +
+      `<span class="line-badge" style="background:${m.color};color:${m.text};font-size:14px;padding:2px 8px">${targetLine}</span> line.<br>` +
+      `Use a <strong>${remedy}</strong> to remedy.`;
+    msgEl.classList.remove('vis');
+    dismissEl?.classList.remove('vis');
+    // Stagger the fade-in with JS so the animation re-triggers
+    setTimeout(()=>{ msgEl.classList.add('vis'); },330);
+    setTimeout(()=>{ dismissEl?.classList.add('vis'); },880);
+  }
+  el.classList.add('active');
+  return new Promise(resolve => {
+    const dismiss = (e) => {
+      e.preventDefault();
+      el.classList.remove('active');
+      el.removeEventListener('click', dismiss);
+      el.removeEventListener('touchend', dismiss);
+      resolve();
+    };
+    setTimeout(()=>{
+      el.addEventListener('click', dismiss);
+      el.addEventListener('touchend', dismiss);
+    }, 220);
+  });
 }
 
 let _stationLines = null;
@@ -2648,8 +2881,10 @@ async function aiDecide(p) {
       p.hand.splice(p.hand.indexOf(distCard),1);
       const dtype={Breakdown:'breakdown','Medical Emergency':'medical',Delay:'delay'}[distCard.label];
       G.disturbances[human.line]={type:dtype,by:p.name};
+      G.lastDisturbance={line:human.line,type:dtype,by:p.name,ts:Date.now()};
       if(dtype==='medical') human.skipMove=true;
-      G.discard.push(distCard); flyCardToDiscard(p,distCard); snd('disturbance');
+      G.discard.push(distCard); flyCardToDiscard(p,distCard);
+      await showDisturbanceReveal(distCard, p, human.line, dtype);
       addLog(`${p.name} hit your ${human.line} with ${distCard.label}!`,'bad');
       renderDisturbances(); return;
     }
