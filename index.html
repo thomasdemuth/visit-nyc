@@ -210,6 +210,24 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
 #win-screen{background:rgba(0,0,0,.92);flex-direction:column;gap:22px;text-align:center;z-index:300}
 #win-screen h2{font-size:46px;font-weight:900;color:#FCCC0A}
 #win-screen p{font-size:20px;color:#ccc}
+#win-spotlight{position:fixed;inset:0;pointer-events:none;z-index:481;opacity:0;transition:opacity .9s}
+#win-spotlight.on{opacity:1}
+#win-confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:510;display:none}
+#win-confetti-canvas.on{display:block}
+#win-overlay{position:fixed;inset:0;z-index:500;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;overflow-y:auto;background:rgba(0,0,16,.74)}
+#win-overlay.active{display:flex}
+#win-trophy{font-size:84px;display:block;text-align:center;margin-bottom:4px;animation:win-bounce .75s cubic-bezier(.36,.07,.19,.97) both}
+#win-headline{font-size:clamp(22px,4vw,44px);font-weight:900;color:#FCCC0A;text-align:center;margin:8px 0 6px;text-shadow:0 2px 20px rgba(0,0,0,.9);max-width:90vw}
+#win-subline{font-size:clamp(14px,2.5vw,20px);color:#ddd;text-align:center;margin:0 0 20px;text-shadow:0 1px 8px rgba(0,0,0,.8)}
+#win-stats-section{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;max-width:92vw;margin-bottom:22px;opacity:0;transition:opacity .7s}
+#win-stats-section.visible{opacity:1}
+.win-stat-card{background:rgba(10,12,30,.88);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:14px 18px;min-width:136px;text-align:left;color:#fff;backdrop-filter:blur(8px)}
+.win-stat-name{font-size:11px;font-weight:800;color:#FCCC0A;letter-spacing:.6px;margin-bottom:8px;text-transform:uppercase}
+.win-stat-row{font-size:13px;color:#bbb;display:flex;justify-content:space-between;gap:12px;margin-top:3px}
+.win-stat-row b{color:#fff}
+#win-buttons{display:flex;gap:14px;opacity:0;transition:opacity .9s;pointer-events:none;margin-top:4px}
+#win-buttons.visible{opacity:1;pointer-events:auto}
+@keyframes win-bounce{0%{transform:scale(0) rotate(-30deg);opacity:0}60%{transform:scale(1.3) rotate(6deg);opacity:1}80%{transform:scale(.92) rotate(-2deg)}100%{transform:scale(1) rotate(0)}}
 
 /* ── SETUP EXTENSIONS ── */
 .opp-count-row{display:flex;gap:8px;margin-top:2px}
@@ -790,12 +808,18 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
   </div>
 </div>
 
-<!-- WIN -->
-<div id="win-screen" class="screen hidden">
-  <div style="font-size:72px" id="win-emoji">🏆</div>
-  <h2 id="win-title">You Win!</h2>
-  <p id="win-desc"></p>
-  <button class="btn btn-primary" onclick="showScreen('welcome')" style="margin-top:12px">Play Again</button>
+<!-- WIN SEQUENCE -->
+<canvas id="win-confetti-canvas"></canvas>
+<div id="win-spotlight"></div>
+<div id="win-overlay">
+  <div id="win-trophy">🏆</div>
+  <h2 id="win-headline"></h2>
+  <p id="win-subline"></p>
+  <div id="win-stats-section"></div>
+  <div id="win-buttons">
+    <button class="btn btn-secondary" onclick="winGoHome()">↩ Return to Home</button>
+    <button class="btn btn-primary" id="win-btn-again" onclick="winPlayAgain()">Play Again</button>
+  </div>
 </div>
 
 <script>
@@ -1129,6 +1153,8 @@ function _attachMPListeners(roomCode,playerList,config) {
     Object.assign(G,data);
     _stationLines=null; _lineDistFor=null;
     drawnThisTurn=false; selectedCard=null;
+    const winP = G.players.find(p=>checkWin(p));
+    if(winP && !document.getElementById('win-overlay').classList.contains('active')) { triggerWin(winP); return; }
     renderAll(); updateTurnGlow();
     if(isMyTurn()&&prevTurn!==myPI()){showYourTurnBanner();startTurnTimer();}
   });
@@ -1745,14 +1771,14 @@ function initGame(playerName, color, opponents, config) {
   const deck = buildDeck(cfg);
   const startSt = cfg.autoSwipe ? route.startStation : 'New Jersey';
   const startLine = cfg.autoSwipe ? (linesAt(route.startStation).filter(l=>LINES[l]&&!isBus(l))[0]||null) : null;
-  const mkP = (name,col,isAI,diff)=>({name,color:col,isAI,difficulty:diff||'easy',station:startSt,line:startLine,dir:1,hand:[],metrocardPlayed:!!cfg.autoSwipe,turnsWaited:0,skipMove:false});
+  const mkP = (name,col,isAI,diff)=>({name,color:col,isAI,difficulty:diff||'easy',station:startSt,line:startLine,dir:1,hand:[],metrocardPlayed:!!cfg.autoSwipe,turnsWaited:0,skipMove:false,stops:0,transfers:0,drawn:0,played:0});
   const players = [
     mkP(playerName, color, false, null),
     ...opponents.map(o=>mkP(o.name, o.color, true, o.difficulty))
   ];
   // Don't deal cards here — intro animation deals them
   const discard = [deck.pop()];
-  G = {players,deck,discard,route,currentPlayer:0,disturbances:{},log:[]};
+  G = {players,deck,discard,route,currentPlayer:0,disturbances:{},log:[],startTime:Date.now()};
   drawnThisTurn = false; selectedCard = null;
 }
 
@@ -1775,6 +1801,7 @@ function movePlayer(player, stops) {
   if(dist && dist.type==='delay') actual = Math.max(1, stops-1);
   let ni = Math.max(0, Math.min(sts.length-1, idx + player.dir * actual));
   player.station = sts[ni];
+  player.stops = (player.stops||0) + Math.abs(ni - idx);
 }
 
 function stopsTo(player, dest) {
@@ -1795,6 +1822,7 @@ function doTransfer(player, newLine, newDir) {
   }
   player.line = newLine;
   player.dir = newDir;
+  player.transfers = (player.transfers||0) + 1;
 }
 
 function checkWin(p) { return p.station === G.route.endStation; }
@@ -1837,7 +1865,7 @@ function shuffle(arr) {
 }
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
-  const ids={welcome:'welcome',setup:'setup',game:'game','win-screen':'win-screen'};
+  const ids={welcome:'welcome',setup:'setup',game:'game'};
   document.getElementById(ids[id]||id).classList.remove('hidden');
 }
 function lb(l) {
@@ -2202,6 +2230,7 @@ async function drawFromDeck() {
   snd('draw');
   await flyActionCard({card, fromRect:rectOf('.bp-deck'), toRect:rectOf('#hand-inner'), toScale:1, faceDown:true});
   myPlayer().hand.push(card);
+  myPlayer().drawn = (myPlayer().drawn||0) + 1;
   addLog('You drew a card.');
   renderAll();
 }
@@ -2214,6 +2243,7 @@ async function drawFromDiscard() {
   snd('draw');
   await flyActionCard({card, fromRect:rectOf('.bp-disc'), toRect:rectOf('#hand-inner'), toScale:1, faceDown:false});
   myPlayer().hand.push(card);
+  myPlayer().drawn = (myPlayer().drawn||0) + 1;
   addLog(`You took the discard: <b>${card.label}</b>`);
   renderAll();
 }
@@ -2248,7 +2278,7 @@ async function discardSelected() {
 
 async function executeCard(card, player, isHuman) {
   const idx = player.hand.indexOf(card);
-  if(idx>=0) player.hand.splice(idx,1);
+  if(idx>=0) { player.hand.splice(idx,1); player.played = (player.played||0) + 1; }
 
   switch(card.type) {
     case 'distance':    await playMove(card, player, isHuman); break;
@@ -2507,6 +2537,7 @@ async function runAI() {
     snd('draw');
     await flyActionCard({card, fromRect:rectOf(fromSel), toRect, toScale:0.4, faceDown:fromSel==='.bp-deck', fade:true});
     p.hand.push(card);
+    p.drawn = (p.drawn||0) + 1;
   }
   addLog(`${p.name} drew a card.`);
   renderAll(); await sleep(500);
@@ -2634,20 +2665,128 @@ function bestDir(p) {
 // ═══════════════════════════════════════════════════════════════
 // WIN
 // ═══════════════════════════════════════════════════════════════
-function triggerWin(p) {
+async function triggerWin(p) {
   snd('win');
   stopTurnTimer();
+
+  // 1. Zoom map into the winning station
+  const svgEl = document.querySelector('#board-area svg');
+  if(svgEl && baseVB) {
+    const coord = getSVGCoord(p.station);
+    const zoomW = baseVB.w * 0.28, zoomH = baseVB.h * 0.28;
+    await animatePan(svgEl, coord.x - zoomW/2, coord.y - zoomH/2, zoomW, zoomH, 1500, renderTrains);
+  }
+
+  // 2. Spotlight on the winning token
+  const trainEl = document.getElementById(`train-${G.players.indexOf(p)}`);
+  const spotEl = document.getElementById('win-spotlight');
+  if(trainEl && spotEl) {
+    const r = trainEl.getBoundingClientRect();
+    const cx = r.left + r.width/2, cy = r.top + r.height/2;
+    spotEl.style.background = `radial-gradient(circle 130px at ${cx}px ${cy}px, transparent 0%, rgba(0,0,20,.9) 100%)`;
+    spotEl.classList.add('on');
+  }
+  await sleep(1100);
+
+  // 3. Hide game UI
+  ['bottom-wrap','game-panel','bottom-left-ctrls'].forEach(id=>document.getElementById(id)?.classList.add('ui-hidden'));
+
+  // 4. Confetti
+  launchConfetti();
+  await sleep(450);
+
+  // 5. Announcement
   const isMe = MP ? G.players.indexOf(p)===myPI() : !p.isAI;
-  document.getElementById('win-emoji').textContent = isMe?'🏆':'😢';
-  document.getElementById('win-title').textContent = isMe?'You Win!':`${p.name} Wins!`;
-  document.getElementById('win-desc').textContent = `${p.name} reached ${G.route.endLabel}!`;
-  showScreen('win-screen');
+  const elapsed = G.startTime ? Math.round((Date.now()-G.startTime)/60000) : null;
+  const timeStr = elapsed!==null ? ` in ${elapsed} Minute${elapsed===1?'':'s'}` : '';
+
+  document.getElementById('win-trophy').textContent = isMe ? '🏆' : '🎉';
+  document.getElementById('win-headline').textContent = `${p.name} won the race to ${G.route.endLabel}${timeStr}!`;
+  document.getElementById('win-subline').textContent = isMe ? 'You made it! 🚇' : 'Better luck next time!';
+  document.getElementById('win-overlay').classList.add('active');
+
+  // 6. Stats after 1.1s
+  await sleep(1100);
+  const statsEl = document.getElementById('win-stats-section');
+  statsEl.innerHTML = G.players.map(pl=>`
+    <div class="win-stat-card">
+      <div class="win-stat-name">${pl.name}${pl===p?' 🏆':''}</div>
+      <div class="win-stat-row"><span>Stops moved</span><b>${pl.stops||0}</b></div>
+      <div class="win-stat-row"><span>Transfers</span><b>${pl.transfers||0}</b></div>
+      <div class="win-stat-row"><span>Cards drawn</span><b>${pl.drawn||0}</b></div>
+      <div class="win-stat-row"><span>Cards played</span><b>${pl.played||0}</b></div>
+    </div>`).join('');
+  statsEl.classList.add('visible');
+  snd('draw');
+
+  // 7. Buttons after 5s grace period
+  await sleep(5000);
+  const btnsEl = document.getElementById('win-buttons');
+  if(MP && myPI()!==0) document.getElementById('win-btn-again').style.display='none';
+  btnsEl.classList.add('visible');
+
+  // 8. MP cleanup
   if(MP) {
     getDB().ref(`rooms/${MP.roomCode}/meta/state`).set('ended');
     getDB().ref(`rooms/${MP.roomCode}/meta/winner`).set(p.name);
     mpOff();
     MP=null;
   }
+}
+
+function launchConfetti() {
+  const canvas = document.getElementById('win-confetti-canvas');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  canvas.classList.add('on');
+  const ctx = canvas.getContext('2d');
+  const cols = ['#EE352E','#FCCC0A','#0039A6','#00933C','#B933AD','#FF6319','#6CBE45','#A7A9AC'];
+  const ps = Array.from({length:140},()=>({
+    x:Math.random()*canvas.width, y:-(Math.random()*canvas.height*0.6+20),
+    w:Math.random()*10+5, h:Math.random()*5+2,
+    c:cols[0|(Math.random()*cols.length)],
+    rot:Math.random()*Math.PI*2, rotV:(Math.random()-.5)*.12,
+    vy:Math.random()*2.5+1.5, vx:(Math.random()-.5)*1.5, op:Math.random()*.4+.6
+  }));
+  let f=0;
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ps.forEach(p=>{
+      ctx.save(); ctx.globalAlpha=p.op; ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+      ctx.fillStyle=p.c; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore();
+      p.y+=p.vy; p.x+=p.vx; p.rot+=p.rotV; p.vy+=0.04;
+      if(p.y>canvas.height+20&&f<300){p.y=-20;p.x=Math.random()*canvas.width;p.vy=Math.random()*2.5+1.5;}
+    });
+    f++;
+    if(f<450) requestAnimationFrame(draw);
+    else{
+      canvas.style.transition='opacity 1.2s'; canvas.style.opacity='0';
+      setTimeout(()=>{canvas.classList.remove('on');canvas.style.opacity='';canvas.style.transition='';},1300);
+    }
+  }
+  requestAnimationFrame(draw);
+}
+
+function _winCleanup() {
+  document.getElementById('win-overlay').classList.remove('active');
+  document.getElementById('win-spotlight').classList.remove('on');
+  document.getElementById('win-stats-section').classList.remove('visible');
+  document.getElementById('win-buttons').classList.remove('visible');
+  const c = document.getElementById('win-confetti-canvas');
+  c.classList.remove('on'); c.style.opacity=''; c.style.transition='';
+}
+
+function winGoHome() {
+  _winCleanup();
+  const svg = document.querySelector('#board-area svg');
+  if(svg && baseVB) svg.setAttribute('viewBox',`${baseVB.x} ${baseVB.y} ${baseVB.w} ${baseVB.h}`);
+  G=null; showScreen('welcome');
+}
+
+function winPlayAgain() {
+  _winCleanup();
+  ['bottom-wrap','game-panel','bottom-left-ctrls'].forEach(id=>document.getElementById(id)?.classList.remove('ui-hidden'));
+  G=null; showScreen('setup');
 }
 
 // ═══════════════════════════════════════════════════════════════
