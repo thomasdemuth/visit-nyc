@@ -2433,6 +2433,17 @@ async function drawFromDiscard() {
   myPlayer().drawn = (myPlayer().drawn||0) + 1;
   addLog(`You took the discard: <b>${card.label}</b>`);
   renderAll();
+  await seedDiscardIfEmpty();
+}
+
+// When the discard pile is empty, flip the top deck card onto it.
+async function seedDiscardIfEmpty() {
+  if(G.discard.length > 0 || G.deck.length === 0) return;
+  const card = G.deck.pop();
+  renderDeck();
+  await flyActionCard({card, fromRect:rectOf('.bp-deck'), toRect:rectOf('.bp-disc'), toScale:0.4, faceDown:true});
+  G.discard.push(card);
+  renderDeck();
 }
 
 function reshuffleDiscard() {
@@ -2805,6 +2816,7 @@ async function runAI() {
     await flyActionCard({card, fromRect:rectOf(fromSel), toRect, toScale:0.4, faceDown:fromSel==='.bp-deck', fade:true});
     p.hand.push(card);
     p.drawn = (p.drawn||0) + 1;
+    if(fromSel==='.bp-disc') await seedDiscardIfEmpty();
   }
   addLog(`${p.name} drew a card.`);
   renderAll(); await sleep(500);
