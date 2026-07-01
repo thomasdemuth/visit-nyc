@@ -3057,6 +3057,30 @@ function _winCleanup() {
   document.getElementById('win-buttons').classList.remove('visible');
   const c = document.getElementById('win-confetti-canvas');
   c.classList.remove('on'); c.style.opacity=''; c.style.transition='';
+
+  // Clear pawns
+  document.getElementById('trains-html-layer').innerHTML = '';
+  // Clear disturbance alerts panel
+  document.getElementById('service-alerts').innerHTML = '';
+  // Hide route card
+  const routeInfo = document.getElementById('route-info');
+  if(routeInfo) routeInfo.style.display = 'none';
+  // Hide start/end station badges
+  ['badge-start','badge-end'].forEach(id=>{
+    const b = document.getElementById(id);
+    if(b) b.classList.remove('visible');
+  });
+  // Reset SVG line disturbance visuals
+  document.querySelectorAll('#board-area svg .disturb-overlay').forEach(p=>p.remove());
+  document.querySelectorAll('#board-area svg .game-line').forEach(p=>{
+    const orig = p.dataset.origColor;
+    if(orig) p.setAttribute('stroke', orig);
+    p.removeAttribute('stroke-dasharray');
+    p.style.opacity = '1';
+    p.onmousemove = null; p.onmouseleave = null;
+  });
+  const tooltip = document.getElementById('map-disturbance-tooltip');
+  if(tooltip) tooltip.style.display = 'none';
 }
 
 function winGoHome() {
