@@ -393,7 +393,90 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
 
 /* flying deal card */
 .deal-fly{position:fixed;z-index:250;width:70px;height:98px;border-radius:8px;background:url('action card/Front@6x.png') center/cover no-repeat,linear-gradient(135deg,#2d4a8a,#1a2f5e);border:2px solid #253a6a;pointer-events:none;will-change:transform,opacity}
+
+/* ── LOBBY SCREENS ── */
+#lobby-create,#lobby-join{background:linear-gradient(160deg,#0a0a12 0%,#0d1a3a 60%,#001a4d 100%);flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:28px 16px;gap:0;z-index:10}
+.lobby-card{background:#111827;border-radius:16px;padding:28px 32px;width:520px;max-width:95vw}
+.lobby-card h2{font-size:19px;margin-bottom:22px;color:#FCCC0A;text-transform:uppercase;letter-spacing:1px}
+.lobby-section{margin-bottom:20px}
+.lobby-section-label{font-size:9px;color:#445;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+.room-code-display{font-size:38px;font-weight:900;letter-spacing:10px;color:#FCCC0A;text-align:center;padding:14px;background:rgba(252,204,10,.06);border:2px solid rgba(252,204,10,.18);border-radius:12px;margin-bottom:8px;font-family:monospace}
+.copy-link-btn{width:100%;padding:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#667;font-size:11px;cursor:pointer;transition:all .18s;text-align:center}
+.copy-link-btn:hover{background:rgba(255,255,255,.1);color:#ccc}
+.copy-link-btn.copied{border-color:#6CBE45;color:#6CBE45}
+.toggle-row{display:flex;align-items:flex-start;justify-content:space-between;padding:9px 0;border-bottom:1px solid #111e2e;gap:10px}
+.toggle-row:last-child{border-bottom:none}
+.toggle-label{font-size:12px;color:#ccc;line-height:1.3}
+.toggle-sub{font-size:9px;color:#445;margin-top:2px}
+.toggle-switch{position:relative;width:38px;height:20px;flex-shrink:0;margin-top:1px}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:#2d3748;border-radius:20px;cursor:pointer;transition:background .2s}
+.toggle-slider::before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .2s}
+.toggle-switch input:checked+.toggle-slider{background:#EE352E}
+.toggle-switch input:checked+.toggle-slider::before{transform:translateX(18px)}
+.slider-row{display:flex;align-items:center;gap:10px;padding:6px 0}
+.slider-row label{font-size:11px;color:#778;width:90px;flex-shrink:0}
+.slider-row input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:3px;border-radius:2px;background:#2d3748;outline:none;cursor:pointer}
+.slider-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#EE352E;cursor:pointer;border:2px solid #fff}
+.slider-val{font-size:12px;color:#FCCC0A;font-weight:700;width:34px;text-align:right;flex-shrink:0}
+.lobby-player-item{display:flex;align-items:center;gap:9px;padding:8px 10px;background:#0d1422;border-radius:8px;margin-bottom:5px}
+.lobby-player-dot{width:13px;height:13px;border-radius:50%;flex-shrink:0}
+.lobby-player-name{flex:1;font-size:12px;font-weight:600;color:#ddd}
+.lobby-player-status{font-size:9px;padding:2px 8px;border-radius:9px;font-weight:700;letter-spacing:.3px}
+.lobby-player-status.ready{background:rgba(108,190,69,.15);color:#6CBE45}
+.lobby-player-status.waiting{background:rgba(100,100,100,.1);color:#445}
+.lobby-kick-btn{padding:3px 9px;background:transparent;border:1px solid #EE352E33;border-radius:6px;color:#EE352E66;font-size:9px;cursor:pointer;transition:all .15s}
+.lobby-kick-btn:hover{background:#EE352E18;color:#EE352E}
+#lobby-waiting-msg{font-size:10px;color:#334;margin-top:4px}
+
+/* ── IN-GAME CHAT ── */
+#mp-chat-section{border-top:1px solid #0d1829}
+#chat-expand-hdr{display:flex;align-items:center;justify-content:space-between;padding:4px 8px;cursor:pointer;border-bottom:1px solid #0d1829;user-select:none}
+#chat-expand-label{font-size:8px;color:#334;letter-spacing:1px;text-transform:uppercase}
+#chat-expand-icon{font-size:8px;color:#334;transition:transform .2s}
+#chat-messages{max-height:80px;overflow-y:auto;padding:4px 8px;font-size:10px;line-height:1.5;transition:max-height .25s ease}
+#chat-messages.expanded{max-height:220px}
+#chat-messages::-webkit-scrollbar{width:2px}
+#chat-messages::-webkit-scrollbar-thumb{background:#1a2840}
+.chat-msg-line .chat-author{font-weight:700}
+.chat-emoji-line{text-align:center;font-size:15px;padding:1px 0}
+#emoji-row{display:flex;gap:3px;padding:4px 7px 2px}
+.emoji-btn{flex:1;padding:3px 0;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-radius:6px;font-size:13px;cursor:pointer;transition:background .12s,transform .1s;line-height:1}
+.emoji-btn:hover{background:rgba(255,255,255,.1);transform:scale(1.15)}
+#chat-input-row{display:flex;gap:5px;padding:4px 7px 6px}
+#chat-input{flex:1;padding:5px 8px;background:#0a1020;border:1px solid #1a2840;border-radius:7px;color:#ccc;font-size:10px;outline:none}
+#chat-input:focus{border-color:#2d4a7a}
+#chat-send-btn{padding:5px 11px;background:#1a3a5c;color:#7ab;border:1px solid #2d4a7a;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;transition:background .15s}
+#chat-send-btn:hover{background:#22486e}
+
+/* ── TURN TIMER ── */
+#turn-timer{position:fixed;top:11px;left:50%;transform:translateX(-50%);z-index:100;display:none;align-items:center;gap:7px;background:rgba(8,13,26,.9);border:1px solid #1a2840;border-radius:20px;padding:6px 16px;font-size:14px;font-weight:700;color:#FCCC0A;pointer-events:none;white-space:nowrap}
+#turn-timer.active{display:flex}
+#turn-timer.urgent{color:#EE352E;border-color:#EE352E44;animation:timerPulse .5s ease-in-out infinite}
+@keyframes timerPulse{0%,100%{opacity:.8}50%{opacity:1}}
+#timer-bar{position:fixed;top:0;left:0;height:3px;background:#FCCC0A;z-index:101;pointer-events:none;transition:width 1s linear,background .3s}
+
+/* ── ROUTE WAIT (guests) ── */
+#route-wait-overlay{position:fixed;inset:0;z-index:180;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+#route-wait-overlay.hidden{display:none}
+.rwait-spinner{width:44px;height:44px;border:4px solid #1a2840;border-top-color:#FCCC0A;border-radius:50%;animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.rwait-title{font-size:20px;font-weight:800;color:#FCCC0A}
+.rwait-sub{font-size:12px;color:#445}
+
+/* ── MP ROUTE CONFIRM ── */
+#mp-route-confirm{position:fixed;inset:0;z-index:185;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+#mp-route-confirm.hidden{display:none}
+.mrc-card{background:#0e1628;border:2px solid #FCCC0A;border-radius:14px;padding:22px 40px;text-align:center;min-width:260px}
+.mrc-label{font-size:9px;color:#445;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+.mrc-start{font-size:20px;font-weight:800;color:#FCCC0A}
+.mrc-arr{font-size:18px;color:#333;margin:4px 0}
+.mrc-end{font-size:20px;font-weight:800;color:#EE352E}
+.mrc-status{font-size:10px;color:#445;margin-top:8px}
 </style>
+<!-- Firebase compat SDK (no bundler needed) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -404,8 +487,126 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
     <sub>The Subway Board Game</sub>
   </div>
   <div class="subway-stripe" id="stripe-bar"></div>
-  <button class="btn btn-primary" onclick="showSetup()">New Game</button>
-  <p style="color:#444;font-size:12px">2 AI opponents &nbsp;·&nbsp; Desktop play</p>
+  <div style="display:flex;flex-direction:column;gap:11px;align-items:center;width:272px">
+    <button class="btn btn-primary" style="width:100%;font-size:16px" onclick="showCreateRoom()">🎮 Create Game</button>
+    <button class="btn btn-secondary" style="width:100%;font-size:16px" onclick="showJoinRoom()">🔗 Join Game</button>
+    <button class="btn btn-secondary" style="width:100%;font-size:14px;opacity:.7" onclick="showSetup()">🤖 Solo Play</button>
+  </div>
+</div>
+
+<!-- LOBBY CREATE -->
+<div id="lobby-create" class="screen hidden">
+  <div class="lobby-card">
+    <h2>Host a Game</h2>
+
+    <div class="lobby-section">
+      <div class="lobby-section-label">Your Info</div>
+      <div class="field" style="margin-bottom:12px">
+        <label>Your Name</label>
+        <input type="text" id="host-mp-name" placeholder="Enter your name" maxlength="18" value="Host">
+      </div>
+      <div class="field" style="margin-bottom:4px">
+        <label>Your Color</label>
+        <div class="color-grid" id="host-color-grid"></div>
+      </div>
+    </div>
+
+    <div class="lobby-section">
+      <div class="lobby-section-label">Room Code</div>
+      <div class="room-code-display" id="host-room-code">——</div>
+      <button class="copy-link-btn" id="copy-link-btn" onclick="copyRoomLink()">📋 Copy invite link</button>
+    </div>
+
+    <div class="lobby-section">
+      <div class="lobby-section-label">Game Settings</div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Disable Disturbance Cards</div><div class="toggle-sub">Removes Breakdown, Medical Emergency &amp; Delay</div></div>
+        <label class="toggle-switch"><input type="checkbox" id="cfg-no-disturbance"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Disable Solution Cards</div><div class="toggle-sub">Removes Handyman, Ambulance &amp; Schedule</div></div>
+        <label class="toggle-switch"><input type="checkbox" id="cfg-no-solution"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Auto-Swipe at Start</div><div class="toggle-sub">Players begin on subway — no Metrocard needed</div></div>
+        <label class="toggle-switch"><input type="checkbox" id="cfg-auto-swipe"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="slider-row" style="margin-top:6px">
+        <label>Hand size</label>
+        <input type="range" min="3" max="7" step="1" value="5" id="cfg-hand-size" oninput="document.getElementById('hand-size-val').textContent=this.value">
+        <div class="slider-val" id="hand-size-val">5</div>
+      </div>
+      <div class="toggle-row" style="margin-top:4px">
+        <div><div class="toggle-label">Turn Time Limit</div></div>
+        <label class="toggle-switch"><input type="checkbox" id="cfg-timer-on" onchange="document.getElementById('timer-slider-row').style.display=this.checked?'flex':'none'"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="slider-row" id="timer-slider-row" style="display:none">
+        <label>Seconds</label>
+        <input type="range" min="15" max="120" step="5" value="60" id="cfg-timer-secs" oninput="document.getElementById('timer-secs-val').textContent=this.value+'s'">
+        <div class="slider-val" id="timer-secs-val">60s</div>
+      </div>
+    </div>
+
+    <div class="lobby-section">
+      <div class="lobby-section-label">Players <span id="lobby-player-count" style="color:#FCCC0A;font-weight:700"></span></div>
+      <div id="lobby-players-list"></div>
+      <div id="lobby-waiting-msg">Waiting for players to join...</div>
+    </div>
+
+    <div class="setup-actions">
+      <button class="btn btn-secondary" onclick="leaveRoom()">Cancel</button>
+      <button class="btn btn-primary" id="start-mp-btn" onclick="startMPGame()" disabled style="position:relative">
+        Start Game
+        <span id="start-mp-hint" style="position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:9px;color:#EE352E;white-space:nowrap;display:none">Need ≥2 players &amp; all ready</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- LOBBY JOIN -->
+<div id="lobby-join" class="screen hidden">
+  <div class="lobby-card">
+    <h2>Join a Game</h2>
+
+    <!-- Step 1: enter code + name -->
+    <div id="join-step-1">
+      <div class="field">
+        <label>Room Code</label>
+        <input type="text" id="join-room-code" placeholder="ABC123" maxlength="6"
+          style="text-transform:uppercase;letter-spacing:6px;font-size:20px;font-weight:700;text-align:center"
+          oninput="this.value=this.value.toUpperCase()">
+      </div>
+      <div class="field">
+        <label>Your Name</label>
+        <input type="text" id="join-name" placeholder="Enter your name" maxlength="18">
+      </div>
+      <div class="field">
+        <label>Your Color</label>
+        <div class="color-grid" id="join-color-grid"></div>
+      </div>
+      <div class="setup-actions">
+        <button class="btn btn-secondary" onclick="showScreen('welcome')">Back</button>
+        <button class="btn btn-primary" onclick="joinRoom()">Join Room</button>
+      </div>
+    </div>
+
+    <!-- Step 2: waiting room -->
+    <div id="join-step-2" style="display:none">
+      <div class="lobby-section">
+        <div class="lobby-section-label">Room Settings</div>
+        <div id="join-settings-display" style="font-size:11px;color:#556;line-height:2"></div>
+      </div>
+      <div class="lobby-section">
+        <div class="lobby-section-label">Players</div>
+        <div id="join-players-list"></div>
+      </div>
+      <div id="join-kicked-msg" style="display:none;color:#EE352E;font-size:12px;margin-bottom:10px"></div>
+      <div class="setup-actions">
+        <button class="btn btn-secondary" onclick="leaveRoom()">Leave</button>
+        <button class="btn btn-primary" id="ready-btn" onclick="toggleReady()">I'm Ready</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- SETUP -->
@@ -489,6 +690,27 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
               <span id="chat-toggle" class="open">▲</span>
             </div>
             <div id="log"></div>
+            <!-- MP chat (hidden in solo) -->
+            <div id="mp-chat-section" style="display:none">
+              <div id="chat-expand-hdr" onclick="toggleChatExpand()">
+                <span id="chat-expand-label">Chat</span>
+                <span id="chat-expand-icon">▲</span>
+              </div>
+              <div id="chat-messages"></div>
+              <div id="emoji-row">
+                <button class="emoji-btn" onclick="sendEmoji('🚇')">🚇</button>
+                <button class="emoji-btn" onclick="sendEmoji('😂')">😂</button>
+                <button class="emoji-btn" onclick="sendEmoji('😤')">😤</button>
+                <button class="emoji-btn" onclick="sendEmoji('🙏')">🙏</button>
+                <button class="emoji-btn" onclick="sendEmoji('👑')">👑</button>
+                <button class="emoji-btn" onclick="sendEmoji('💀')">💀</button>
+              </div>
+              <div id="chat-input-row">
+                <input type="text" id="chat-input" placeholder="Say something..." maxlength="120"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();sendChat()}">
+                <button id="chat-send-btn" onclick="sendChat()">↑</button>
+              </div>
+            </div>
           </div>
         </div>
         <!-- Big deck + discard -->
@@ -529,6 +751,29 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
 </div>
 <div id="your-turn-banner">YOUR TURN</div>
 
+<!-- Turn timer bar + counter -->
+<div id="timer-bar" style="width:100%"></div>
+<div id="turn-timer"><span>⏱</span><span id="timer-display">60</span>s</div>
+
+<!-- MP: guests wait while host picks route -->
+<div id="route-wait-overlay" class="hidden">
+  <div class="rwait-spinner"></div>
+  <div class="rwait-title">Host is choosing a route…</div>
+  <div class="rwait-sub">Hang tight, you'll confirm when they pick!</div>
+</div>
+
+<!-- MP: all players confirm route before animation starts -->
+<div id="mp-route-confirm" class="hidden">
+  <div class="mrc-card">
+    <div class="mrc-label">Your Route</div>
+    <div class="mrc-start" id="mrc-start">—</div>
+    <div class="mrc-arr">↓</div>
+    <div class="mrc-end" id="mrc-end">—</div>
+  </div>
+  <div class="mrc-status" id="mrc-status"></div>
+  <button class="btn btn-primary" id="mrc-btn" onclick="mpConfirmRoute()" style="padding:12px 40px">Confirm Route</button>
+</div>
+
 <!-- INTRO OVERLAY (just the fan) -->
 <div id="intro-overlay" class="hidden">
   <div class="intro-fan" id="intro-fan"></div>
@@ -553,6 +798,464 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
 </div>
 
 <script>
+// ═══════════════════════════════════════════════════════════════
+// FIREBASE CONFIG
+// ═══════════════════════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey:'AIzaSyDXjhbIGN4OVmt9nZdODtZuiqDhmEr9erw',
+  authDomain:'visitnyc-multiplayer.firebaseapp.com',
+  databaseURL:'https://visitnyc-multiplayer-default-rtdb.firebaseio.com',
+  projectId:'visitnyc-multiplayer',
+  storageBucket:'visitnyc-multiplayer.firebasestorage.app',
+  messagingSenderId:'82816719740',
+  appId:'1:82816719740:web:3dfa487058d5e7076e62f9'
+};
+let _db = null;
+function getDB() {
+  if(!_db) {
+    if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    _db = firebase.database();
+  }
+  return _db;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MULTIPLAYER STATE
+// ═══════════════════════════════════════════════════════════════
+let MP = null;
+// MP when active: {roomCode, myUid, myPlayerIndex, isHost, config, _routeDeck}
+
+let _myUid = null;
+function myUid() {
+  if(!_myUid) {
+    _myUid = sessionStorage.getItem('vnycUid');
+    if(!_myUid) { _myUid = Math.random().toString(36).slice(2)+Date.now().toString(36); sessionStorage.setItem('vnycUid',_myUid); }
+  }
+  return _myUid;
+}
+
+function myPI()     { return MP ? MP.myPlayerIndex : 0; }
+function isMyTurn() { return !!(G.players && G.currentPlayer === myPI()); }
+function myPlayer() { return G.players ? G.players[myPI()] : null; }
+function maxHandSize() { return MP?.config?.handSize || 5; }
+
+function genCode() {
+  const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({length:6},()=>c[0|Math.random()*c.length]).join('');
+}
+
+// ── Firebase listener registry ──
+let _mpRefs = []; // [{ref,event,cb}]
+function mpOn(ref,event,cb){ ref.on(event,cb); _mpRefs.push({ref,event,cb}); }
+function mpOff(){ _mpRefs.forEach(({ref,event,cb})=>ref.off(event,cb)); _mpRefs=[]; }
+
+// ── Turn timer ──
+let _timerIv = null;
+function startTurnTimer() {
+  if(!MP?.config?.turnTimeLimitSecs) return;
+  stopTurnTimer();
+  let secs = MP.config.turnTimeLimitSecs;
+  const total = secs;
+  const timerEl = document.getElementById('turn-timer');
+  const disp    = document.getElementById('timer-display');
+  const bar     = document.getElementById('timer-bar');
+  timerEl.classList.add('active'); timerEl.classList.remove('urgent');
+  function tick() {
+    disp.textContent = secs;
+    bar.style.width = (secs/total*100)+'%';
+    bar.style.background = secs<=10?'#EE352E':'#FCCC0A';
+    if(secs<=10) timerEl.classList.add('urgent');
+    if(secs<=0){ stopTurnTimer(); _autoEndTurn(); return; }
+    secs--;
+  }
+  tick();
+  _timerIv = setInterval(tick,1000);
+}
+function stopTurnTimer() {
+  clearInterval(_timerIv); _timerIv=null;
+  const el=document.getElementById('turn-timer'); if(el) el.classList.remove('active','urgent');
+  const bar=document.getElementById('timer-bar'); if(bar) bar.style.width='0';
+}
+async function _autoEndTurn() {
+  const p=myPlayer();
+  if(selectedCard) {
+    const card=selectedCard; selectedCard=null;
+    if(p){p.hand.splice(p.hand.indexOf(card),1);G.discard.push(card);}
+    snd('discard'); addLog('⏱ Time\'s up — card auto-discarded.','bad');
+  } else if(p&&p.hand.length>0) {
+    const card=p.hand.pop(); G.discard.push(card);
+    snd('discard'); addLog('⏱ Time\'s up — card auto-discarded.','bad');
+  } else { addLog('⏱ Time\'s up!','bad'); }
+  renderAll(); endTurn();
+}
+
+// ── Host color ──
+let _hostColor = '#EE352E';
+function initHostColorPicker() {
+  const grid=document.getElementById('host-color-grid'); if(!grid)return;
+  grid.innerHTML='';
+  TOKEN_COLORS.forEach(c=>{
+    const d=document.createElement('div');
+    d.className='color-opt'+(c===_hostColor?' selected':'');
+    d.style.background=c;
+    d.onclick=()=>{ _hostColor=c; grid.querySelectorAll('.color-opt').forEach(e=>e.classList.remove('selected')); d.classList.add('selected'); updateHostPlayerEntry(); };
+    grid.appendChild(d);
+  });
+}
+async function updateHostPlayerEntry() {
+  if(!MP?.roomCode) return;
+  const name=document.getElementById('host-mp-name')?.value.trim()||'Host';
+  await getDB().ref(`rooms/${MP.roomCode}/players/${myUid()}`).update({name,color:_hostColor});
+}
+
+// ── Create room ──
+async function showCreateRoom() {
+  showScreen('lobby-create');
+  initHostColorPicker();
+  const code=genCode();
+  document.getElementById('host-room-code').textContent=code;
+  document.getElementById('cfg-no-disturbance').checked=false;
+  document.getElementById('cfg-no-solution').checked=false;
+  document.getElementById('cfg-auto-swipe').checked=false;
+  document.getElementById('cfg-hand-size').value=5; document.getElementById('hand-size-val').textContent=5;
+  document.getElementById('cfg-timer-on').checked=false; document.getElementById('timer-slider-row').style.display='none';
+  document.getElementById('cfg-timer-secs').value=60; document.getElementById('timer-secs-val').textContent='60s';
+
+  const db=getDB();
+  await db.ref(`rooms/${code}`).set({
+    meta:{code,hostUid:myUid(),state:'lobby',created:Date.now()},
+    config:{disableDisturbance:false,disableSolution:false,autoSwipe:false,handSize:5,turnTimeLimitSecs:0},
+    players:{}
+  });
+  db.ref(`rooms/${code}/players/${myUid()}`).onDisconnect().remove();
+
+  const hostName=document.getElementById('host-mp-name')?.value.trim()||'Host';
+  await db.ref(`rooms/${code}/players/${myUid()}`).set({name:hostName,color:_hostColor,ready:false,isHost:true,joinedAt:Date.now()});
+
+  MP={roomCode:code,myUid:myUid(),myPlayerIndex:0,isHost:true,config:null};
+  _mpRefs=[];
+
+  mpOn(db.ref(`rooms/${code}/players`),'value',snap=>renderLobbyPlayers(snap.val()||{},true));
+  mpOn(db.ref(`rooms/${code}/meta/state`),'value',snap=>{ if(snap.val()==='route-picking') _onMPGameStart(); });
+
+  // Live-sync name/config changes
+  document.getElementById('host-mp-name').oninput=_debounce(updateHostPlayerEntry,400);
+  ['cfg-no-disturbance','cfg-no-solution','cfg-auto-swipe','cfg-hand-size','cfg-timer-on','cfg-timer-secs']
+    .forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('change',_pushHostConfig); el.addEventListener('input',_pushHostConfig); });
+}
+function _debounce(fn,ms){ let t; return function(...a){clearTimeout(t);t=setTimeout(()=>fn.apply(this,a),ms);} }
+function _getHostConfig() {
+  return {
+    disableDisturbance:document.getElementById('cfg-no-disturbance').checked,
+    disableSolution:document.getElementById('cfg-no-solution').checked,
+    autoSwipe:document.getElementById('cfg-auto-swipe').checked,
+    handSize:+document.getElementById('cfg-hand-size').value,
+    turnTimeLimitSecs:document.getElementById('cfg-timer-on').checked?+document.getElementById('cfg-timer-secs').value:0
+  };
+}
+async function _pushHostConfig() {
+  if(!MP?.roomCode) return;
+  await getDB().ref(`rooms/${MP.roomCode}/config`).set(_getHostConfig());
+}
+
+function copyRoomLink() {
+  if(!MP) return;
+  const url=`${location.origin}${location.pathname}?join=${MP.roomCode}`;
+  navigator.clipboard.writeText(url).then(()=>{
+    const btn=document.getElementById('copy-link-btn');
+    btn.textContent='✅ Copied!'; btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='📋 Copy invite link';btn.classList.remove('copied');},2200);
+  });
+}
+
+function renderLobbyPlayers(playersObj,isHost) {
+  const list=document.getElementById(isHost?'lobby-players-list':'join-players-list');
+  if(!list) return;
+  const entries=Object.entries(playersObj).sort(([,a],[,b])=>(a.isHost?0:1)-(b.isHost?0:1)||a.joinedAt-b.joinedAt);
+  list.innerHTML='';
+  entries.forEach(([uid,p])=>{
+    const isMe=uid===myUid();
+    const item=document.createElement('div'); item.className='lobby-player-item';
+    item.innerHTML=`
+      <div class="lobby-player-dot" style="background:${p.color}"></div>
+      <div class="lobby-player-name">${p.name}${p.isHost?' 👑':''}${isMe?' <span style="color:#445;font-size:9px">(you)</span>':''}</div>
+      <span class="lobby-player-status ${p.ready||p.isHost?'ready':'waiting'}">${p.ready||p.isHost?'Ready':'Waiting'}</span>
+      ${isHost&&!isMe?`<button class="lobby-kick-btn" onclick="kickPlayer('${uid}')">Kick</button>`:''}`;
+    list.appendChild(item);
+  });
+  const count=entries.length;
+  const el=document.getElementById('lobby-player-count'); if(el) el.textContent=`(${count})`;
+  const startBtn=document.getElementById('start-mp-btn');
+  const hint=document.getElementById('start-mp-hint');
+  if(startBtn) {
+    const nonHostNotReady=entries.filter(([uid,p])=>uid!==myUid()&&!p.ready);
+    const ok=count>=2&&nonHostNotReady.length===0;
+    startBtn.disabled=!ok;
+    if(hint) hint.style.display=ok?'none':'block';
+  }
+}
+
+async function kickPlayer(uid) {
+  if(!MP?.isHost) return;
+  await getDB().ref(`rooms/${MP.roomCode}/players/${uid}`).remove();
+}
+
+// ── Join room ──
+let _joinColor='#0039A6', _amReady=false;
+function showJoinRoom() {
+  showScreen('lobby-join');
+  document.getElementById('join-step-1').style.display='';
+  document.getElementById('join-step-2').style.display='none';
+  _amReady=false;
+  const grid=document.getElementById('join-color-grid'); grid.innerHTML='';
+  TOKEN_COLORS.forEach(c=>{
+    const d=document.createElement('div');
+    d.className='color-opt'+(c===_joinColor?' selected':'');
+    d.style.background=c;
+    d.onclick=()=>{ _joinColor=c; grid.querySelectorAll('.color-opt').forEach(e=>e.classList.remove('selected')); d.classList.add('selected'); };
+    grid.appendChild(d);
+  });
+  const urlCode=new URLSearchParams(location.search).get('join');
+  if(urlCode) { document.getElementById('join-room-code').value=urlCode.toUpperCase(); }
+}
+
+async function joinRoom() {
+  const code=document.getElementById('join-room-code').value.trim().toUpperCase();
+  const name=document.getElementById('join-name').value.trim()||'Player';
+  if(code.length!==6){alert('Please enter the 6-character room code.');return;}
+  const db=getDB();
+  const snap=await db.ref(`rooms/${code}`).once('value');
+  if(!snap.exists()){alert('Room not found. Check the code and try again.');return;}
+  const roomData=snap.val();
+  if(roomData.meta.state!=='lobby'){alert('This game has already started.');return;}
+  await db.ref(`rooms/${code}/players/${myUid()}`).set({name,color:_joinColor,ready:false,isHost:false,joinedAt:Date.now()});
+  db.ref(`rooms/${code}/players/${myUid()}`).onDisconnect().remove();
+  MP={roomCode:code,myUid:myUid(),myPlayerIndex:-1,isHost:false,config:null};
+  _mpRefs=[];
+  document.getElementById('join-step-1').style.display='none';
+  document.getElementById('join-step-2').style.display='';
+  mpOn(db.ref(`rooms/${code}/players`),'value',snap=>{
+    const players=snap.val()||{};
+    renderLobbyPlayers(players,false);
+    if(MP&&!players[myUid()]){
+      document.getElementById('join-kicked-msg').textContent='You were removed from the room.';
+      document.getElementById('join-kicked-msg').style.display='';
+      setTimeout(()=>leaveRoom(),2000);
+    }
+  });
+  mpOn(db.ref(`rooms/${code}/config`),'value',snap=>{ if(snap.val()) _renderJoinSettings(snap.val()); });
+  mpOn(db.ref(`rooms/${code}/meta/state`),'value',snap=>{ if(snap.val()==='route-picking') _onMPGameStart(); });
+}
+
+function _renderJoinSettings(cfg) {
+  const el=document.getElementById('join-settings-display'); if(!el)return;
+  const lines=['Cards per hand: '+cfg.handSize];
+  if(cfg.disableDisturbance) lines.push('✓ No disturbance cards');
+  if(cfg.disableSolution) lines.push('✓ No solution cards');
+  if(cfg.autoSwipe) lines.push('✓ Auto-swipe at start');
+  if(cfg.turnTimeLimitSecs) lines.push(`⏱ Turn timer: ${cfg.turnTimeLimitSecs}s`);
+  el.innerHTML=lines.map(l=>`<div>${l}</div>`).join('');
+}
+
+async function toggleReady() {
+  if(!MP?.roomCode) return;
+  _amReady=!_amReady;
+  await getDB().ref(`rooms/${MP.roomCode}/players/${myUid()}/ready`).set(_amReady);
+  const btn=document.getElementById('ready-btn');
+  if(btn){btn.textContent=_amReady?'✓ Ready!':"I'm Ready";btn.style.background=_amReady?'#6CBE45':'';}
+}
+
+async function leaveRoom() {
+  if(MP?.roomCode) await getDB().ref(`rooms/${MP.roomCode}/players/${myUid()}`).remove().catch(()=>{});
+  mpOff(); stopTurnTimer();
+  MP=null; _amReady=false;
+  showScreen('welcome');
+}
+
+// ── Start game (host) ──
+async function startMPGame() {
+  if(!MP?.isHost) return;
+  const config=_getHostConfig();
+  const hostName=document.getElementById('host-mp-name')?.value.trim()||'Host';
+  await getDB().ref(`rooms/${MP.roomCode}/config`).set(config);
+  await getDB().ref(`rooms/${MP.roomCode}/players/${myUid()}`).update({name:hostName,color:_hostColor});
+  MP.config=config;
+  await getDB().ref(`rooms/${MP.roomCode}/meta/state`).set('route-picking');
+}
+
+// ── Transition to game ──
+async function _onMPGameStart() {
+  const db=getDB();
+  const roomCode=MP.roomCode;
+  const snap=await db.ref(`rooms/${roomCode}`).once('value');
+  const roomData=snap.val();
+  MP.config=roomData.config;
+  const playersRaw=roomData.players||{};
+  const playerList=Object.entries(playersRaw)
+    .sort(([,a],[,b])=>(a.isHost?-1:1)-(b.isHost?-1:1)||a.joinedAt-b.joinedAt)
+    .map(([uid,p])=>({uid,name:p.name,color:p.color}));
+  MP.myPlayerIndex=Math.max(0,playerList.findIndex(p=>p.uid===myUid()));
+  mpOff();
+  showScreen('game');
+  ['bottom-wrap','game-panel','bottom-left-ctrls'].forEach(id=>document.getElementById(id).classList.add('ui-hidden'));
+  const chatSection=document.getElementById('mp-chat-section'); if(chatSection) chatSection.style.display='';
+  await buildSVGMap();
+  _attachMPListeners(roomCode,playerList,roomData.config);
+  if(MP.isHost) await _mpHostIntro(playerList,roomData.config);
+  else await _mpGuestWait(roomCode,playerList,roomData.config);
+}
+
+function _attachMPListeners(roomCode,playerList,config) {
+  const db=getDB();
+  // All confirmations → host advances state
+  mpOn(db.ref(`rooms/${roomCode}/routeConfirmed`),'value',async snap=>{
+    const confirmed=snap.val()||{};
+    const mrcStatus=document.getElementById('mrc-status');
+    const done=Object.values(confirmed).filter(Boolean).length;
+    if(mrcStatus) mrcStatus.textContent=`${done} / ${playerList.length} confirmed`;
+    if(MP.isHost && playerList.every(p=>confirmed[p.uid]))
+      await db.ref(`rooms/${roomCode}/meta/state`).set('playing');
+  });
+  // State → playing
+  mpOn(db.ref(`rooms/${roomCode}/meta/state`),'value',async snap=>{
+    if(snap.val()==='playing') await _startMPPlayPhase(roomCode,playerList,config);
+  });
+  // Live gameState updates
+  mpOn(db.ref(`rooms/${roomCode}/gameState`),'value',snap=>{
+    const data=snap.val(); if(!data||!G.players) return;
+    if(isMyTurn()) return; // we're the source of truth on our turn
+    const prevTurn=G.currentPlayer;
+    Object.assign(G,data);
+    _stationLines=null; _lineDistFor=null;
+    drawnThisTurn=false; selectedCard=null;
+    renderAll(); updateTurnGlow();
+    if(isMyTurn()&&prevTurn!==myPI()){showYourTurnBanner();startTurnTimer();}
+  });
+  // Chat
+  mpOn(db.ref(`rooms/${roomCode}/chat`).limitToLast(60),'value',snap=>_renderMPChat(snap.val()||{}));
+}
+
+async function _mpHostIntro(playerList,config) {
+  MP._routeDeck=shuffle([...ROUTE_CARDS]);
+  // Reuse the solo intro fan but pick from MP._routeDeck
+  MP._pickingRoute=true;
+  await introSequence(); // modified below to handle MP._pickingRoute
+}
+
+async function _mpGuestWait(roomCode,playerList,config) {
+  document.getElementById('route-wait-overlay').classList.remove('hidden');
+  await new Promise(resolve=>{
+    const ref=getDB().ref(`rooms/${roomCode}/route`);
+    const cb=snap=>{ if(snap.val()){ref.off('value',cb);resolve();} };
+    ref.on('value',cb);
+  });
+  document.getElementById('route-wait-overlay').classList.add('hidden');
+  const routeSnap=await getDB().ref(`rooms/${roomCode}/route`).once('value');
+  _showMPRouteConfirm(routeSnap.val());
+}
+
+function _showMPRouteConfirm(route) {
+  document.getElementById('mrc-start').textContent=route.startLabel;
+  document.getElementById('mrc-end').textContent=route.endLabel;
+  document.getElementById('mp-route-confirm').classList.remove('hidden');
+}
+
+async function mpConfirmRoute() {
+  if(!MP?.roomCode) return;
+  document.getElementById('mrc-btn').disabled=true;
+  document.getElementById('mrc-btn').textContent='✓ Confirmed!';
+  await getDB().ref(`rooms/${MP.roomCode}/routeConfirmed/${myUid()}`).set(true);
+}
+
+async function _startMPPlayPhase(roomCode,playerList,config) {
+  const db=getDB();
+  const routeSnap=await db.ref(`rooms/${roomCode}/route`).once('value');
+  const routeData=routeSnap.val();
+  const routeObj=ROUTE_CARDS.find(r=>r.startStation===routeData.startStation&&r.endStation===routeData.endStation)||routeData;
+  const deck=buildDeck(config);
+  const mkP=(name,col)=>({name,color:col,isAI:false,difficulty:null,
+    station:config.autoSwipe?routeObj.startStation:'New Jersey',
+    line:config.autoSwipe?(linesAt(routeObj.startStation).filter(l=>LINES[l]&&!isBus(l))[0]||null):null,
+    dir:1,hand:[],metrocardPlayed:!!config.autoSwipe,turnsWaited:0,skipMove:false});
+  const players=playerList.map(p=>mkP(p.name,p.color));
+  const discard=[deck.pop()];
+  G={players,deck,discard,route:routeObj,currentPlayer:0,disturbances:{},log:[]};
+  drawnThisTurn=false; selectedCard=null;
+  const hs=config.handSize||5;
+  for(let i=0;i<hs;i++) players.forEach(p=>{if(G.deck.length)p.hand.push(G.deck.pop());});
+  document.getElementById('route-wait-overlay').classList.add('hidden');
+  document.getElementById('mp-route-confirm').classList.add('hidden');
+  await _mpMapAnimation();
+  ['bottom-wrap','game-panel','bottom-left-ctrls'].forEach((id,i)=>{
+    setTimeout(()=>document.getElementById(id).classList.remove('ui-hidden'),i*130);
+  });
+  renderAll(); updateTurnGlow();
+  if(isMyTurn()){showYourTurnBanner();startTurnTimer();}
+  addLog(`🚇 ${routeObj.startLabel} → ${routeObj.endLabel}`,'hl');
+  renderLog();
+  if(MP.isHost) syncGameState();
+}
+
+async function _mpMapAnimation() {
+  const svgEl=document.querySelector('#board-area svg');
+  if(!svgEl||!baseVB||!G.route) return;
+  const route=G.route;
+  const sc=getSVGCoord(route.startStation), ec=getSVGCoord(route.endStation);
+  const zW=480,zH=400;
+  const bStart=document.getElementById('badge-start'), bEnd=document.getElementById('badge-end');
+  bStart.dataset.station=route.startStation; bEnd.dataset.station=route.endStation;
+  await animatePan(svgEl,sc.x-zW/2,sc.y-zH/2,zW,zH,1200);
+  positionBadgeAtStation(bStart,route.startStation); bStart.classList.add('visible');
+  await sleep(1800);
+  await animatePan(svgEl,ec.x-zW/2,ec.y-zH/2,zW,zH,1200,updateRouteBadges);
+  positionBadgeAtStation(bEnd,route.endStation); bEnd.classList.add('visible');
+  await sleep(1500);
+  await animatePan(svgEl,baseVB.x,baseVB.y,baseVB.w,baseVB.h,1200,updateRouteBadges);
+  updateRouteBadges();
+  [bStart,bEnd].forEach(el=>{
+    el.style.fontSize='11px';el.style.padding='3px 9px';el.style.borderRadius='5px';el.style.opacity='0.85';el.dataset.small='1';
+  });
+}
+
+async function syncGameState() {
+  if(!MP?.roomCode) return;
+  await getDB().ref(`rooms/${MP.roomCode}/gameState`).set(JSON.parse(JSON.stringify(G)));
+}
+
+// ── Chat ──
+async function sendChat() {
+  if(!MP?.roomCode) return;
+  const input=document.getElementById('chat-input');
+  const msg=input.value.trim(); if(!msg) return;
+  input.value='';
+  const p=myPlayer();
+  await getDB().ref(`rooms/${MP.roomCode}/chat`).push({uid:myUid(),name:p?.name||'Player',color:p?.color||'#fff',msg,ts:Date.now(),isEmoji:false});
+}
+async function sendEmoji(emoji) {
+  if(!MP?.roomCode) return;
+  const p=myPlayer();
+  await getDB().ref(`rooms/${MP.roomCode}/chat`).push({uid:myUid(),name:p?.name||'Player',color:p?.color||'#fff',msg:emoji,ts:Date.now(),isEmoji:true});
+}
+function _renderMPChat(chatObj) {
+  const el=document.getElementById('chat-messages'); if(!el) return;
+  const msgs=Object.values(chatObj).sort((a,b)=>a.ts-b.ts);
+  el.innerHTML=msgs.slice(-40).map(m=>{
+    if(m.isEmoji) return `<div class="chat-emoji-line"><span style="color:${m.color};font-weight:700;font-size:9px">${m.name}</span> ${m.msg}</div>`;
+    return `<div class="chat-msg-line"><span class="chat-author" style="color:${m.color}">${m.name}:</span> <span style="color:#889">${m.msg}</span></div>`;
+  }).join('');
+  el.scrollTop=el.scrollHeight;
+}
+function toggleChatExpand() {
+  const msgs=document.getElementById('chat-messages');
+  const icon=document.getElementById('chat-expand-icon');
+  msgs.classList.toggle('expanded');
+  icon.textContent=msgs.classList.contains('expanded')?'▼':'▲';
+}
+
+function checkUrlJoin() {
+  if(new URLSearchParams(location.search).get('join')) showJoinRoom();
+}
+
 // ═══════════════════════════════════════════════════════════════
 // LINE META
 // ═══════════════════════════════════════════════════════════════
@@ -996,7 +1699,8 @@ const CARD_TIPS = {
   'Schedule':       'Fixes a Delay on any line.',
 };
 
-function buildDeck() {
+function buildDeck(config) {
+  const cfg=config||{};
   const cards = [];
   const add = (n,type,stops,img,label) => {
     for(let i=0;i<n;i++) cards.push({type,stops,img,label,id:Math.random()});
@@ -1007,12 +1711,16 @@ function buildDeck() {
   add(4,'distance',5,'action card/5 stops@6x.png','5 Stops');
   add(18,'metrocard',0,'action card/metrocard@6x.png','Metrocard');
   add(6,'transfer',0,'action card/transfer@6x.png','Transfer');
-  add(3,'disturbance',0,'action card/breakdown@6x.png','Breakdown');
-  add(3,'disturbance',0,'action card/medical@6x.png','Medical Emergency');
-  add(3,'disturbance',0,'action card/delay@6x.png','Delay');
-  add(6,'solution',0,'action card/handyman@6x.png','Handyman');
-  add(6,'solution',0,'action card/ambulance@6x.png','Ambulance');
-  add(6,'solution',0,'action card/schedule@6x.png','Schedule');
+  if(!cfg.disableDisturbance) {
+    add(3,'disturbance',0,'action card/breakdown@6x.png','Breakdown');
+    add(3,'disturbance',0,'action card/medical@6x.png','Medical Emergency');
+    add(3,'disturbance',0,'action card/delay@6x.png','Delay');
+  }
+  if(!cfg.disableSolution) {
+    add(6,'solution',0,'action card/handyman@6x.png','Handyman');
+    add(6,'solution',0,'action card/ambulance@6x.png','Ambulance');
+    add(6,'solution',0,'action card/schedule@6x.png','Schedule');
+  }
   return shuffle(cards);
 }
 
@@ -1030,10 +1738,13 @@ let baseVB = null; // {x,y,w,h} saved after buildSVGMap for zoom reference
 let confirmRouteResolve = null;
 let tileCache = []; // [{cx, cy}] all station tile centers from SVG layer h
 
-function initGame(playerName, color, opponents) {
+function initGame(playerName, color, opponents, config) {
+  const cfg=config||{};
   const route = ROUTE_CARDS[Math.floor(Math.random()*ROUTE_CARDS.length)];
-  const deck = buildDeck();
-  const mkP = (name,col,isAI,diff)=>({name,color:col,isAI,difficulty:diff||'easy',station:'New Jersey',line:null,dir:1,hand:[],metrocardPlayed:false,turnsWaited:0,skipMove:false});
+  const deck = buildDeck(cfg);
+  const startSt = cfg.autoSwipe ? route.startStation : 'New Jersey';
+  const startLine = cfg.autoSwipe ? (linesAt(route.startStation).filter(l=>LINES[l]&&!isBus(l))[0]||null) : null;
+  const mkP = (name,col,isAI,diff)=>({name,color:col,isAI,difficulty:diff||'easy',station:startSt,line:startLine,dir:1,hand:[],metrocardPlayed:!!cfg.autoSwipe,turnsWaited:0,skipMove:false});
   const players = [
     mkP(playerName, color, false, null),
     ...opponents.map(o=>mkP(o.name, o.color, true, o.difficulty))
@@ -1266,14 +1977,14 @@ function renderPlayers() {
 }
 
 function renderHand() {
-  const p = G.players[0];
+  const p = myPlayer() || G.players[0];
   const wrap = document.getElementById('hand-inner');
   wrap.innerHTML = '';
   const n = p.hand.length;
   if(n===0) return;
   const FAN = Math.min(10, 60/n);
   const maxA = FAN*(n-1)/2;
-  const isMyTurn = G.currentPlayer===0;
+  const isMyTurnNow = isMyTurn();
 
   p.hand.forEach((card,i)=>{
     const rot = -maxA + i*FAN;
@@ -1291,7 +2002,7 @@ function renderHand() {
     // Tooltip
     addTip(div, card);
 
-    if(isMyTurn && drawnThisTurn) {
+    if(isMyTurnNow && drawnThisTurn) {
       div.onclick = ()=> selectCard(card, div, rot);
     } else {
       div.style.cursor = 'default';
@@ -1342,14 +2053,14 @@ function renderRoute() {
 }
 
 function updateUI() {
-  const isMyTurn = G.currentPlayer===0;
+  const isMyTurnNow = isMyTurn();
   const phase = drawnThisTurn ? 'play' : 'draw';
   // update turn badge
   const cp = curP();
   const dot = document.getElementById('tb-dot');
   const nm  = document.getElementById('tb-name');
   if(dot) dot.style.background = cp.color;
-  if(nm)  nm.textContent = isMyTurn ? 'You' : cp.name;
+  if(nm)  nm.textContent = isMyTurnNow ? 'You' : cp.name;
   // update tooltip
   const tt = document.getElementById('turn-tooltip');
   if(tt) {
@@ -1366,22 +2077,22 @@ function updateUI() {
   }
   const playBtn = document.getElementById('play-btn');
   const discBtn = document.getElementById('discard-btn');
-  if(isMyTurn && phase==='play') {
+  if(isMyTurnNow && phase==='play') {
     playBtn.disabled = !selectedCard;
     playBtn.textContent = selectedCard ? `Play ${selectedCard.label}` : 'Select a card';
     discBtn.disabled = !selectedCard;
   } else {
     playBtn.disabled = true;
-    playBtn.textContent = isMyTurn ? 'Draw first' : 'Not your turn';
+    playBtn.textContent = isMyTurnNow ? 'Draw first' : 'Not your turn';
     discBtn.disabled = true;
   }
   // big piles clickable only on your turn / draw phase
   const bpDeck = document.querySelector('.bp-deck');
   const bpDisc = document.querySelector('.bp-disc');
-  if(bpDeck) bpDeck.style.opacity = (!isMyTurn||drawnThisTurn) ? '.45' : '1';
-  if(bpDisc) bpDisc.style.opacity = (!isMyTurn||drawnThisTurn||G.discard.length===0) ? '.45' : '1';
-  document.getElementById('btn-draw-deck').disabled = !isMyTurn || drawnThisTurn;
-  document.getElementById('btn-draw-disc').disabled = !isMyTurn || drawnThisTurn || G.discard.length===0;
+  if(bpDeck) bpDeck.style.opacity = (!isMyTurnNow||drawnThisTurn) ? '.45' : '1';
+  if(bpDisc) bpDisc.style.opacity = (!isMyTurnNow||drawnThisTurn||G.discard.length===0) ? '.45' : '1';
+  document.getElementById('btn-draw-deck').disabled = !isMyTurnNow || drawnThisTurn;
+  document.getElementById('btn-draw-disc').disabled = !isMyTurnNow || drawnThisTurn || G.discard.length===0;
 }
 
 function renderAll() {
@@ -1420,7 +2131,7 @@ function closeModal() { document.getElementById('modal-overlay').classList.add('
 // CARD PLAY
 // ═══════════════════════════════════════════════════════════════
 function selectCard(card, div, rot) {
-  if(!drawnThisTurn || G.currentPlayer!==0) return;
+  if(!drawnThisTurn || !isMyTurn()) return;
   selectedCard = selectedCard===card ? null : card;
   document.querySelectorAll('.hand-card').forEach(c=>c.classList.remove('selected'));
   if(selectedCard) {
@@ -1480,7 +2191,7 @@ function flyCardToDiscard(player, card) {
 }
 
 async function drawFromDeck() {
-  if(G.currentPlayer!==0||drawnThisTurn) return;
+  if(!isMyTurn()||drawnThisTurn) return;
   if(G.deck.length===0) reshuffleDiscard();
   if(G.deck.length===0) return;
   const card = G.deck.pop();
@@ -1488,19 +2199,19 @@ async function drawFromDeck() {
   renderDeck(); updateUI();
   snd('draw');
   await flyActionCard({card, fromRect:rectOf('.bp-deck'), toRect:rectOf('#hand-inner'), toScale:1, faceDown:true});
-  G.players[0].hand.push(card);
+  myPlayer().hand.push(card);
   addLog('You drew a card.');
   renderAll();
 }
 
 async function drawFromDiscard() {
-  if(G.currentPlayer!==0||drawnThisTurn||G.discard.length===0) return;
+  if(!isMyTurn()||drawnThisTurn||G.discard.length===0) return;
   const card = G.discard.pop();
   drawnThisTurn = true;
   renderDeck(); updateUI();
   snd('draw');
   await flyActionCard({card, fromRect:rectOf('.bp-disc'), toRect:rectOf('#hand-inner'), toScale:1, faceDown:false});
-  G.players[0].hand.push(card);
+  myPlayer().hand.push(card);
   addLog(`You took the discard: <b>${card.label}</b>`);
   renderAll();
 }
@@ -1514,15 +2225,15 @@ function reshuffleDiscard() {
 }
 
 async function playSelected() {
-  if(!selectedCard||G.currentPlayer!==0||!drawnThisTurn) return;
+  if(!selectedCard||!isMyTurn()||!drawnThisTurn) return;
   const card = selectedCard; selectedCard=null;
-  await executeCard(card, G.players[0], true);
+  await executeCard(card, myPlayer(), true);
 }
 
 async function discardSelected() {
-  if(!selectedCard||G.currentPlayer!==0||!drawnThisTurn) return;
+  if(!selectedCard||!isMyTurn()||!drawnThisTurn) return;
   const card = selectedCard; selectedCard=null;
-  G.players[0].hand.splice(G.players[0].hand.indexOf(card),1);
+  myPlayer().hand.splice(myPlayer().hand.indexOf(card),1);
   G.discard.push(card);
   snd('discard'); addLog(`You discarded ${card.label}.`);
   renderAll();
@@ -1542,8 +2253,9 @@ async function executeCard(card, player, isHuman) {
     default: G.discard.push(card); snd('discard');
   }
 
-  while(!isHuman && player.hand.length>5) G.discard.push(player.hand.shift());
-  if(isHuman && player.hand.length>5) await forceDiscard(player);
+  const mhs = maxHandSize();
+  while(!isHuman && player.hand.length>mhs) G.discard.push(player.hand.shift());
+  if(isHuman && player.hand.length>mhs) await forceDiscard(player);
 
   if(checkWin(player)) { triggerWin(player); return; }
   endTurn();
@@ -1746,7 +2458,7 @@ function updateTurnGlow() {
   const cp = curP();
   document.documentElement.style.setProperty('--turn-color', cp.color);
   const glow = document.getElementById('turn-glow');
-  if(glow) glow.classList.toggle('mine', G.currentPlayer===0);
+  if(glow) glow.classList.toggle('mine', isMyTurn());
 }
 
 function showYourTurnBanner() {
@@ -1759,11 +2471,17 @@ function showYourTurnBanner() {
 
 function endTurn() {
   drawnThisTurn=false; selectedCard=null;
+  stopTurnTimer();
   G.currentPlayer=(G.currentPlayer+1)%G.players.length;
   renderAll();
   updateTurnGlow();
-  if(G.currentPlayer===0) showYourTurnBanner();
-  if(G.players[G.currentPlayer].isAI) setTimeout(runAI, 850);
+  if(MP) {
+    syncGameState();
+    // In MP there are no AI players — next player's client will take over
+  } else {
+    if(isMyTurn()) showYourTurnBanner();
+    if(G.players[G.currentPlayer].isAI) setTimeout(runAI, 850);
+  }
 }
 
 async function runAI() {
@@ -1911,10 +2629,18 @@ function bestDir(p) {
 // ═══════════════════════════════════════════════════════════════
 function triggerWin(p) {
   snd('win');
-  document.getElementById('win-emoji').textContent = p.isAI?'😢':'🏆';
-  document.getElementById('win-title').textContent = p.isAI?`${p.name} Wins!`:'You Win!';
+  stopTurnTimer();
+  const isMe = MP ? G.players.indexOf(p)===myPI() : !p.isAI;
+  document.getElementById('win-emoji').textContent = isMe?'🏆':'😢';
+  document.getElementById('win-title').textContent = isMe?'You Win!':`${p.name} Wins!`;
   document.getElementById('win-desc').textContent = `${p.name} reached ${G.route.endLabel}!`;
   showScreen('win-screen');
+  if(MP) {
+    getDB().ref(`rooms/${MP.roomCode}/meta/state`).set('ended');
+    getDB().ref(`rooms/${MP.roomCode}/meta/winner`).set(p.name);
+    mpOff();
+    MP=null;
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2016,6 +2742,7 @@ function refreshBotColors() {
 function showSetup(){showScreen('setup');initSetupUI();}
 
 async function startGame() {
+  MP = null; // ensure solo mode
   const name=document.getElementById('player-name-input').value.trim()||'Player';
   const opponents = botSetups.slice(0,numOpponents).map((b,i)=>({
     name:'AI '+BOT_NAMES[i%BOT_NAMES.length], color:b.color, difficulty:b.difficulty
@@ -2139,6 +2866,9 @@ async function introSequence() {
   promptEl.classList.remove('show');
   promptEl.remove();
 
+  // In MP host mode, assign the chosen route card now
+  if(MP?._pickingRoute) G.route = MP._routeDeck[midIdx % MP._routeDeck.length];
+
   // Lift the chosen card
   const mid = cards[midIdx];
   mid.style.transitionDelay = '0ms';
@@ -2194,6 +2924,20 @@ async function introSequence() {
   document.getElementById('intro-confirm-btn').classList.add('show');
   await new Promise(r=>{ confirmRouteResolve=r; });
   document.getElementById('intro-confirm-btn').classList.remove('show');
+
+  // ── MP host: write route to Firebase, show confirm screen, return early ──
+  if(MP?._pickingRoute) {
+    MP._pickingRoute = false;
+    const r = G.route;
+    await getDB().ref(`rooms/${MP.roomCode}/route`).set({img:r.img,startStation:r.startStation,startLabel:r.startLabel,endStation:r.endStation,endLabel:r.endLabel});
+    await getDB().ref(`rooms/${MP.roomCode}/meta/state`).set('route-confirming');
+    await getDB().ref(`rooms/${MP.roomCode}/routeConfirmed/${myUid()}`).set(true);
+    overlay.style.transition='opacity .5s ease'; overlay.style.opacity='0';
+    setTimeout(()=>{overlay.classList.add('hidden');overlay.style.opacity='';overlay.style.transition='';},500);
+    flipWrap.remove();
+    _showMPRouteConfirm(r);
+    return;
+  }
 
   // ── Confirm clicked: fade backdrop, fly card to corner, and pan to start — together ──
   overlay.style.transition = 'opacity .5s ease';
@@ -2450,7 +3194,7 @@ function initMapInteraction() {
 
 window.addEventListener('resize',()=>{ if(G&&G.players) renderTrains(); });
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
-window.onload=()=>showScreen('welcome');
+window.onload=()=>{ showScreen('welcome'); initSetupUI(); checkUrlJoin(); };
 </script>
 </body>
 </html>
