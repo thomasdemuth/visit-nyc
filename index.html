@@ -1351,6 +1351,7 @@ const SVG_STATIONS = {
   '125 St-St Nicholas Av': {x:1160, y:1137},
   '135 St': {x:1160, y:1105},
   '135 St-2': {x:1295, y:1100},
+  '149 St-Grand Concourse': {x:1440, y:1060},
   '14 St-6 Av': {x:1268, y:1548},
   '14 St-8 Av': {x:1156, y:1548},
   '14 St-Union Sq': {x:1375, y:1548},
@@ -1379,6 +1380,7 @@ const SVG_STATIONS = {
   '33 St-Rawson St': {x:1704, y:1356},
   '34 St-Herald Sq': {x:1300, y:1474},
   '34 St-Hudson Yards': {x:1069, y:1474},
+  '34 St-Penn Station': {x:1243, y:1468},
   '36 St': {x:1736, y:2038},
   '36 St-R': {x:1672, y:1291},
   '39 Av-Dutch Kills': {x:1634, y:1291},
@@ -1411,6 +1413,7 @@ const SVG_STATIONS = {
   '9 Av': {x:1774, y:2083},
   '95 St': {x:1068, y:1222},
   '96 St': {x:1402, y:1217},
+  '96 St-1': {x:1068, y:1200},
   'Astor Place': {x:1402, y:1585},
   'Astoria Blvd': {x:1634, y:1216},
   'Astoria-Ditmars Blvd': {x:1634, y:1169},
@@ -1467,6 +1470,7 @@ const SVG_STATIONS = {
   'Franklin Av': {x:1807, y:1819},
   'Franklin Av-Botanic Garden': {x:1845, y:1899},
   'Freeman St': {x:1539, y:997},
+  'Jackson Av': {x:1539, y:1017},
   'Fresh Pond Rd': {x:1790, y:1548},
   'Fulton St': {x:1431, y:1791},
   'Gates Av': {x:1803, y:1672},
@@ -1680,11 +1684,16 @@ async function buildSVGMap() {
 // SUBWAY GAME DATA
 // ═══════════════════════════════════════════════════════════════
 const LINES = {
-  '1':{stations:['Van Cortlandt Park-242 St','207 St','Dyckman St','191 St','168 St','157 St','City College','125 St-Broadway','Cathedral Pkwy-1','95 St','86 St-1','79 St','66 St-Lincoln Center','59 St-Columbus Circle','Times Sq-42 St','23 St-1','Christopher St-Sheridan Sq','Houston St','Canal St-1','Chambers St','World Trade Ctr-Cortlandt St','Rector St','South Ferry']},
-  '2':{stations:['Wakefield-241 St','Gun Hill Rd','Pelham Pkwy','E 180 St','West Farms Sq-E Tremont Av','Freeman St','3 Av-South Bronx','135 St-2','125 St-Lenox','110 St','103 St','95 St','86 St-1','79 St','66 St-Lincoln Center','59 St-Columbus Circle','7 Av','Times Sq-42 St','23 St-1','Christopher St-Sheridan Sq','Houston St','Canal St-1','Chambers St','Park Place','Bklyn Brg-City Hall','Wall St-2','Court St-Borough Hall','Atlantic Av-Pacific St','Grand Army Plaza','Franklin Av-Botanic Garden','Sterling St','Church Av-2','Flatbush Av-Brooklyn College']},
-  '3':{stations:['City College','125 St-Broadway','Cathedral Pkwy-1','95 St','86 St-1','79 St','66 St-Lincoln Center','59 St-Columbus Circle','7 Av','Times Sq-42 St','23 St-1','Christopher St-Sheridan Sq','Houston St','Canal St-1','Chambers St','Park Place','Fulton St','Wall St-2','Court St-Borough Hall','Atlantic Av-Pacific St','Grand Army Plaza','Franklin Av-Botanic Garden','Crown Heights-Utica Av','Sutter Av-Rutland Rd','Saratoga Av','Junius St-Livonia Av','New Lots Av-3']},
-  '4':{stations:['Woodlawn','Bedford Park Blvd-Lehman College','Burnside Av','176 St','Mt Eden Av','161 St-Yankee Stadium','125 St-Lexington Av','110 St-4','96 St','86 St','77 St','59 St','53 St','Grand Central-42 St','33 St','23 St-4','14 St-Union Sq','Astor Place','Canal St-4','Wall St','Bowling Green','Court St-Borough Hall','Atlantic Av-Pacific St','Grand Army Plaza','Franklin Av-Botanic Garden','Crown Heights-Utica Av']},
-  '5':{stations:['Bowling Green','Wall St','Bklyn Brg-City Hall','Canal St-4','Astor Place','14 St-Union Sq','23 St-4','33 St','Grand Central-42 St','53 St','59 St','77 St','86 St','96 St','110 St-4','125 St-Lexington Av','3 Av-South Bronx','Freeman St','West Farms Sq-E Tremont Av','E 180 St','Pelham Pkwy','Morris Park','Eastchester-Dyre Av']},
+  // 1 — IRT Broadway local (all stops)
+  '1':{stations:['Van Cortlandt Park-242 St','207 St','Dyckman St','191 St','168 St','157 St','City College','96 St-1','86 St-1','79 St','66 St-Lincoln Center','59 St-Columbus Circle','Times Sq-42 St','34 St-Penn Station','23 St-1','14 St-6 Av','Christopher St-Sheridan Sq','Houston St','Canal St-1','Chambers St','World Trade Ctr-Cortlandt St','Rector St','South Ferry']},
+  // 2 — IRT 7 Av express; Bronx local stops, Manhattan express
+  '2':{stations:['Wakefield-241 St','Gun Hill Rd','Pelham Pkwy','E 180 St','West Farms Sq-E Tremont Av','Freeman St','Jackson Av','3 Av-South Bronx','149 St-Grand Concourse','135 St-2','125 St-Lenox','110 St','96 St-1','Times Sq-42 St','34 St-Penn Station','14 St-6 Av','Chambers St','Park Place','Fulton St','Wall St-2','Court St-Borough Hall','Atlantic Av-Pacific St','Grand Army Plaza','Franklin Av-Botanic Garden','Sterling St','Church Av-2','Flatbush Av-Brooklyn College']},
+  // 3 — IRT 7 Av express; terminates at New Lots
+  '3':{stations:['City College','125 St-Broadway','Cathedral Pkwy','96 St-1','Times Sq-42 St','34 St-Penn Station','14 St-6 Av','Chambers St','Park Place','Fulton St','Wall St-2','Court St-Borough Hall','Atlantic Av-Pacific St','Grand Army Plaza','Franklin Av-Botanic Garden','Crown Heights-Utica Av','Sutter Av-Rutland Rd','Saratoga Av','Junius St-Livonia Av','New Lots Av-3']},
+  // 4 — IRT Lex express; skips local stops
+  '4':{stations:['Woodlawn','Bedford Park Blvd-Lehman College','Burnside Av','176 St','Mt Eden Av','167 St','161 St-Yankee Stadium','125 St-Lexington Av','86 St','59 St','Grand Central-42 St','14 St-Union Sq','Bklyn Brg-City Hall','Fulton St','Wall St','Bowling Green','Court St-Borough Hall','Atlantic Av-Pacific St','Franklin Av-Botanic Garden','Crown Heights-Utica Av']},
+  // 5 — IRT Dyre Av / Lex express; no West Farms or Pelham stops
+  '5':{stations:['Eastchester-Dyre Av','Morris Park','E 180 St','Freeman St','Jackson Av','3 Av-South Bronx','149 St-Grand Concourse','125 St-Lexington Av','86 St','59 St','Grand Central-42 St','14 St-Union Sq','Bklyn Brg-City Hall','Fulton St','Wall St','Bowling Green']},
   '6':{stations:['Bklyn Brg-City Hall','Canal St-4','Astor Place','23 St-4','33 St','Grand Central-42 St','53 St','59 St','77 St','86 St','96 St','110 St-4','125 St-Lexington Av','Cypress Av','Longwood Av','Hunts Point Av','Elder Av','Parkchester','Zerega Av','Buhre Av','Pelham Bay Park']},
   '7':{stations:['34 St-Hudson Yards','Times Sq-42 St','47-50 Sts-Rockefeller Ctr','Grand Central-42 St','Vernon Blvd-Jackson Av','Court Sq-23 St','Queensboro Plaza','Queens Plaza','33 St-Rawson St','46 St-Bliss','69 St','Jackson Hts-Roosevelt Av','Junction Blvd','Mets-Willets Pt','Flushing-Main St']},
   'A':{stations:['Inwood-207 St','190 St','175 St','168 St','163 St-Amsterdam Av','145 St','135 St','125 St-St Nicholas Av','Cathedral Pkwy','103 St','86 St-A','81 St-Museum of Natural History','72 St','59 St-Columbus Circle','23 St-A','14 St-8 Av','Christopher St-Sheridan Sq','W 4 St-Washington Square','Spring St','Canal St','Park Place','Cortlandt St','Fulton St','Jay St-MetroTech','Hoyt St','Lafayette Av','Franklin Av','Utica Av','Ralph Av','Rockaway Av','Broadway Junction','Liberty Av','Shepherd Av','Euclid Av','Grant Av','88 St','Rockaway Blvd','Ozone Park-Lefferts Blvd']},
@@ -1983,16 +1992,23 @@ function renderDisturbances() {
     p.style.opacity = '1';
   });
 
-  // Apply active disturbances
-  Object.entries(G.disturbances).forEach(([lineId, d]) => {
-    const svgColor = LINE_SVG_COLORS[lineId];
-    if(!svgColor) return;
-    const paths = svgLinePathsByColor[svgColor] || [];
-    paths.forEach(p => {
-      p.setAttribute('stroke', '#3a3a3a');
-      p.setAttribute('stroke-dasharray', '12 6');
-      p.style.opacity = '0.4';
-    });
+  // Build color → subway-lines reverse map (exclude bus lines)
+  const colorToLines = {};
+  Object.entries(LINE_SVG_COLORS).forEach(([line, color]) => {
+    if(!isBus(line)) (colorToLines[color] = colorToLines[color]||[]).push(line);
+  });
+
+  // Only grey a color group when ALL lines sharing that color are disrupted.
+  // A single disrupted line (e.g. A but not C or E) shows in the log/UI only.
+  const disturbed = new Set(Object.keys(G.disturbances));
+  Object.entries(colorToLines).forEach(([color, lines]) => {
+    if(lines.every(l => disturbed.has(l))) {
+      (svgLinePathsByColor[color]||[]).forEach(p => {
+        p.setAttribute('stroke', '#3a3a3a');
+        p.setAttribute('stroke-dasharray', '12 6');
+        p.style.opacity = '0.4';
+      });
+    }
   });
 }
 
