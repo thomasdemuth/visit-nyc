@@ -82,7 +82,7 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
 
 /* ── BOARD AREA ── */
 #board-area{
-  flex:1;position:relative;overflow:hidden;
+  flex:1;position:relative;overflow:hidden;touch-action:none;
   background:
     radial-gradient(ellipse 80% 60% at 50% 50%, rgba(30,80,40,.18) 0%, transparent 70%),
     repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(0,40,15,.07) 3px,rgba(0,40,15,.07) 6px),
@@ -1251,7 +1251,7 @@ function _attachMPListeners(roomCode,playerList,config) {
     const prevLastDist=G.lastDisturbance;
     Object.assign(G,data);
     _stationLines=null; _lineDistFor=null;
-    drawnThisTurn=false; selectedCard=null;
+    drawnThisTurn=false; selectedCard=null; _lastLogLen=-1; _lastLogTail=''; _lastHandKey=''; _svgBoardRects=null;
     // Show disturbance reveal for players who didn't play the card
     if(data.lastDisturbance && data.lastDisturbance.ts !== (prevLastDist?.ts ?? -1)) {
       if(data.lastDisturbance.by !== myPlayer()?.name) {
@@ -1313,7 +1313,7 @@ async function _startMPPlayPhase(roomCode,playerList,config) {
   const players=playerList.map(p=>mkP(p.name,p.color));
   const discard=[deck.pop()];
   G={players,deck,discard,route:routeObj,currentPlayer:0,disturbances:{},log:[]};
-  drawnThisTurn=false; selectedCard=null;
+  drawnThisTurn=false; selectedCard=null; _lastLogLen=-1; _lastLogTail=''; _lastHandKey=''; _svgBoardRects=null;
   const hs=config.handSize||5;
   for(let i=0;i<hs;i++) players.forEach(p=>{if(G.deck.length)p.hand.push(G.deck.pop());});
   document.getElementById('route-wait-overlay').classList.add('hidden');
@@ -1827,11 +1827,11 @@ const LINES = {
   'J':{stations:['Jamaica Center','Sutphin Blvd-Archer Av-JFK','111 St','Woodhaven Blvd-J','Cypress Hills','Norwood Av','Van Siclen Av','Broadway Junction','Chauncey St','Gates Av','Myrtle Av-Broadway','Hewes St','Marcy Av','Delancey St-Essex St','Canal St-4','Bklyn Brg-City Hall','Fulton St','Broad St']},
   'L':{stations:['14 St-8 Av','14 St-6 Av','14 St-Union Sq','3 Av','1 Av','Lorimer St-Metropolitan Av','Montrose Av','Jefferson St','Myrtle Av-Wyckoff Av','Halsey St','Wilson Av','Broadway Junction','Sutter Av','Junius St-Livonia Av','New Lots Av','Canarsie-Rockaway Pkwy']},
   'M':{stations:['Forest Hills-71 Av','63 Dr-Rego Park','Woodhaven Blvd','Grand Av-Newtown','Jackson Hts-Roosevelt Av','46 St','Steinway St','36 St-R','21 St-Queensbridge','63 St-Lexington Av','57 St','47-50 Sts-Rockefeller Ctr','34 St-Herald Sq','23 St','14 St-6 Av','W 4 St-Washington Square','Bleecker St-Lafayette St','Delancey St-Essex St','Marcy Av','Hewes St','Myrtle Av-Broadway','Central Av','Myrtle Av-Wyckoff Av','Fresh Pond Rd','Middle Village-Metropolitan Av']},
-  'N':{stations:['Astoria-Ditmars Blvd','Astoria Blvd','Broadway','39 Av-Dutch Kills','Queensboro Plaza','21 St-Queensbridge','63 St-Lexington Av','59 St','5 Av','57 St','34 St-Herald Sq','23 St','28 St','14 St-Union Sq','8 St-NYU','Canal St-4','Bklyn Brg-City Hall-D','Dekalb Av','Atlantic Av-Pacific St','Grand Army Plaza','Prospect Park','Newkirk Plaza','Kings Hwy-N','Brighton Beach','Coney Island-Stillwell Av']},
-  'Q':{stations:['125 St-2 Av','106 St','86 St-Q','63 St-Lexington Av','77 St','34 St-Herald Sq','23 St','28 St','8 St-NYU','Cortlandt St','South Ferry']},
-  'R':{stations:['Forest Hills-71 Av','63 Dr-Rego Park','Woodhaven Blvd','Grand Av-Newtown','Jackson Hts-Roosevelt Av','46 St','Steinway St','36 St-R','Queens Plaza','Queensboro Plaza','59 St','5 Av','57 St','34 St-Herald Sq','28 St','14 St-Union Sq','8 St-NYU','Court St-Borough Hall','Dekalb Av','Jay St-MetroTech']},
+  'N':{stations:['Astoria-Ditmars Blvd','Astoria Blvd','Broadway','39 Av-Dutch Kills','Queensboro Plaza','59 St','5 Av','Times Sq-42 St','34 St-Herald Sq','14 St-Union Sq','Canal St','Dekalb Av','Atlantic Av-Pacific St','Union St','4 Av-9 St','36 St','59 St-D','Bay Ridge-95 St']},
+  'Q':{stations:['3 Av-South Bronx','125 St-2 Av','106 St','86 St-Q','63 St-Lexington Av','Times Sq-42 St','34 St-Herald Sq','14 St-Union Sq','Canal St','Dekalb Av','Atlantic Av-Pacific St','Prospect Park','Newkirk Plaza','Kings Hwy','Brighton Beach','Coney Island-Stillwell Av']},
+  'R':{stations:['Forest Hills-71 Av','63 Dr-Rego Park','Woodhaven Blvd','Grand Av-Newtown','Jackson Hts-Roosevelt Av','46 St','Steinway St','36 St-R','Queens Plaza','59 St','5 Av','Times Sq-42 St','34 St-Herald Sq','28 St','14 St-Union Sq','8 St-NYU','Canal St','Cortlandt St','South Ferry','Court St-Borough Hall','Dekalb Av','Jay St-MetroTech']},
   'S':{stations:['Franklin Av','Franklin Av-Botanic Garden','Prospect Park']},
-  'W':{stations:['Astoria-Ditmars Blvd','Astoria Blvd','Broadway','39 Av-Dutch Kills','Queens Plaza','Queensboro Plaza','59 St','5 Av','57 St','34 St-Herald Sq','28 St','14 St-Union Sq','8 St-NYU','Canal St-4','Bklyn Brg-City Hall-D','Dekalb Av','Atlantic Av-Pacific St','Union St','4 Av-9 St','36 St','59 St-D','Bay Ridge-95 St']},
+  'W':{stations:['Astoria-Ditmars Blvd','Astoria Blvd','Broadway','39 Av-Dutch Kills','Queensboro Plaza','59 St','5 Av','Times Sq-42 St','34 St-Herald Sq','28 St','14 St-Union Sq','8 St-NYU','Canal St','Cortlandt St','South Ferry']},
   'Z':{stations:['Broad St','Fulton St','Bklyn Brg-City Hall','Delancey St-Essex St','Marcy Av','Hewes St','Myrtle Av-Broadway','Gates Av','Chauncey St','Broadway Junction','Van Siclen Av','Norwood Av','Cypress Hills','Woodhaven Blvd-J','111 St','Sutphin Blvd-Archer Av-JFK','Jamaica Center']},
   '8':{stations:['Pelham Bay Park','Parkchester-E177 St','Hunts Point Av','3 Av-South Bronx']},
   // Bus lines — connect existing subway stations, no SVG path of their own
@@ -2039,7 +2039,12 @@ function lb(l) {
 }
 function addLog(msg,cls='') { G.log.unshift({msg,cls}); if(G.log.length>80)G.log.pop(); }
 
+// Dirty-check helpers — skip full rebuilds when nothing changed
+let _lastLogLen = -1, _lastLogTail = '';
 function renderLog() {
+  const tail = G.log.length ? G.log[G.log.length-1].msg : '';
+  if(G.log.length === _lastLogLen && tail === _lastLogTail) return;
+  _lastLogLen = G.log.length; _lastLogTail = tail;
   document.getElementById('log').innerHTML=G.log.map(e=>`<div class="entry ${e.cls}">${e.msg}</div>`).join('');
 }
 
@@ -2080,12 +2085,19 @@ function getSVGCoord(station) {
   return snapToNearestTile(base.x, base.y);
 }
 
+let _svgBoardRects = null; // cached screen rects, invalidated on resize
+function _getSVGBoardRects(svgEl) {
+  if(!_svgBoardRects) {
+    _svgBoardRects = {svg: svgEl.getBoundingClientRect(), board: document.getElementById('board-area').getBoundingClientRect()};
+  }
+  return _svgBoardRects;
+}
+
 function renderTrains() {
   const layer = document.getElementById('trains-html-layer');
   const svgEl = document.querySelector('#board-area svg');
   if(!svgEl) return;
-  const svgRect = svgEl.getBoundingClientRect();
-  const boardRect = document.getElementById('board-area').getBoundingClientRect();
+  const {svg: svgRect, board: boardRect} = _getSVGBoardRects(svgEl);
 
   // Parse the current viewBox (may be cropped from original after getBBox() crop)
   const vbParts = (svgEl.getAttribute('viewBox') || `0 0 ${SVG_W} ${SVG_H}`).split(/[\s,]+/).map(Number);
@@ -2158,14 +2170,15 @@ function renderDisturbances() {
   const distSet = new Set(Object.keys(G.disturbances));
 
   Object.entries(colorToLines).forEach(([color, lines]) => {
-    // Only apply SVG visual when ALL lines in the color group are disrupted
-    if(!lines.every(l => distSet.has(l))) return;
+    // Apply SVG visual when ANY line in the color group is disrupted
+    const disturbedLines = lines.filter(l => distSet.has(l));
+    if(disturbedLines.length === 0) return;
 
-    const disruptedData = lines.map(l => G.disturbances[l]);
+    const disruptedData = disturbedLines.map(l => G.disturbances[l]);
     const allDelay = disruptedData.every(d => d.type === 'delay');
 
-    // Tooltip text listing all disrupted lines in this group
-    const tipText = lines.map(l => {
+    // Tooltip text listing only the actually-disrupted lines
+    const tipText = disturbedLines.map(l => {
       const d = G.disturbances[l];
       const t = d.type==='breakdown'?'Breakdown':d.type==='medical'?'Medical':d.type==='delay'?'Delay':d.type;
       return `${l}: ${t} (by ${d.by})`;
@@ -2246,8 +2259,12 @@ function renderPlayers() {
   }).join('');
 }
 
+let _lastHandKey = '';
 function renderHand() {
   const p = myPlayer() || G.players[0];
+  const key = p.hand.map(c=>c.label).join(',') + '|' + (selectedCard?.label||'') + '|' + isMyTurn() + '|' + drawnThisTurn;
+  if(key === _lastHandKey) return;
+  _lastHandKey = key;
   const wrap = document.getElementById('hand-inner');
   wrap.innerHTML = '';
   const n = p.hand.length;
@@ -2755,6 +2772,8 @@ async function playDisturbance(card, player, isHuman) {
   if(dtype==='medical') {
     G.players.filter(p=>p.line===target).forEach(p=>p.skipMove=true);
   }
+  // Sync to all MP clients BEFORE the reveal so everyone sees it simultaneously
+  await syncGameState();
   await showDisturbanceReveal(card, player, target, dtype);
   addLog(`${player.name} applied ${card.label} to ${lb(target)} line!`,'bad');
   returnToDeck(card);
@@ -2909,7 +2928,7 @@ function showYourTurnBanner() {
 }
 
 function endTurn() {
-  drawnThisTurn=false; selectedCard=null;
+  drawnThisTurn=false; selectedCard=null; _lastLogLen=-1; _lastLogTail=''; _lastHandKey=''; _svgBoardRects=null;
   stopTurnTimer();
   G.currentPlayer=(G.currentPlayer+1)%G.players.length;
   renderAll();
@@ -3033,6 +3052,7 @@ async function aiDecide(p) {
       G.lastDisturbance={line:human.line,type:dtype,by:p.name,ts:Date.now()};
       if(dtype==='medical') human.skipMove=true;
       G.discard.push(distCard); flyCardToDiscard(p,distCard);
+      await syncGameState();
       await showDisturbanceReveal(distCard, p, human.line, dtype);
       addLog(`${p.name} hit your ${human.line} with ${distCard.label}!`,'bad');
       renderDisturbances(); return;
@@ -3777,65 +3797,103 @@ function initMapInteraction() {
     boardArea.style.cursor='';
   });
 
-  // Touch pan and pinch-to-zoom
-  let _touch=null, _pinchDist=null;
-  boardArea.addEventListener('touchstart',e=>{
-    if(e.touches.length===1) {
-      if(!baseVB) return;
-      const [,,cw]=svgEl.getAttribute('viewBox').split(/[\s,]+/).map(Number);
-      dragRect=svgEl.getBoundingClientRect();
-      dragSF=cw/dragRect.width;
-      _touch={x:e.touches[0].clientX,y:e.touches[0].clientY};
-      _pinchDist=null;
-      e.preventDefault();
-    } else if(e.touches.length===2) {
-      const dx=e.touches[0].clientX-e.touches[1].clientX;
-      const dy=e.touches[0].clientY-e.touches[1].clientY;
-      _pinchDist=Math.hypot(dx,dy);
-      _touch=null;
-      e.preventDefault();
-    }
-  },{passive:false});
+  // Touch pan (1 finger) + pinch-to-zoom (2 fingers)
+  // State captured at gesture start so each frame computes from a stable baseline
+  let _t1=null;                       // {x,y} — 1-finger pan anchor
+  let _pinchStart=null;               // {dist, midX, midY, vb:[x,y,w,h]} — 2-finger baseline
 
-  boardArea.addEventListener('touchmove',e=>{
-    if(_touch && e.touches.length===1) {
-      const [cx,cy,cw,ch]=svgEl.getAttribute('viewBox').split(/[\s,]+/).map(Number);
-      let nx=cx-(e.touches[0].clientX-_touch.x)*dragSF;
-      let ny=cy-(e.touches[0].clientY-_touch.y)*dragSF;
-      nx=Math.max(baseVB.x,Math.min(baseVB.x+baseVB.w-cw,nx));
-      ny=Math.max(baseVB.y,Math.min(baseVB.y+baseVB.h-ch,ny));
-      _applyVB(svgEl,`${nx} ${ny} ${cw} ${ch}`);
-      _touch={x:e.touches[0].clientX,y:e.touches[0].clientY};
-      e.preventDefault();
-    } else if(_pinchDist!==null && e.touches.length===2) {
-      const dx=e.touches[0].clientX-e.touches[1].clientX;
-      const dy=e.touches[0].clientY-e.touches[1].clientY;
-      const dist=Math.hypot(dx,dy);
-      const scale=_pinchDist/dist;
-      const [cx,cy,cw,ch]=svgEl.getAttribute('viewBox').split(/[\s,]+/).map(Number);
-      const nw=Math.max(baseVB.w/8,Math.min(baseVB.w,cw*scale));
-      const nh=Math.max(baseVB.h/8,Math.min(baseVB.h,ch*scale));
-      const rect=svgEl.getBoundingClientRect();
-      const midX=(e.touches[0].clientX+e.touches[1].clientX)/2;
-      const midY=(e.touches[0].clientY+e.touches[1].clientY)/2;
-      const sf=cw/rect.width;
-      const svgMX=cx+(midX-rect.left)*sf;
-      const svgMY=cy+(midY-rect.top)*sf;
-      let nx=Math.max(baseVB.x,Math.min(baseVB.x+baseVB.w-nw,svgMX-nw*(midX-rect.left)/rect.width));
-      let ny=Math.max(baseVB.y,Math.min(baseVB.y+baseVB.h-nh,svgMY-nh*(midY-rect.top)/rect.height));
-      _applyVB(svgEl,`${nx} ${ny} ${nw} ${nh}`);
-      _pinchDist=dist;
-      e.preventDefault();
-    }
-  },{passive:false});
+  function _svgRect() { return svgEl.getBoundingClientRect(); }
+  // Convert a screen point to SVG coords given current viewBox
+  function _toSVG(rect, vb, px, py) {
+    const sc = Math.min(rect.width/vb[2], rect.height/vb[3]);
+    const ox = (rect.width  - vb[2]*sc) / 2;
+    const oy = (rect.height - vb[3]*sc) / 2;
+    return { x: vb[0] + (px - rect.left - ox) / sc,
+             y: vb[1] + (py - rect.top  - oy) / sc };
+  }
+  // Clamp viewBox to basemap bounds
+  function _clampVB(x,y,w,h) {
+    return [
+      Math.max(baseVB.x, Math.min(baseVB.x+baseVB.w-w, x)),
+      Math.max(baseVB.y, Math.min(baseVB.y+baseVB.h-h, y)),
+      w, h
+    ];
+  }
 
-  boardArea.addEventListener('touchend',e=>{
-    if(e.touches.length===0){_touch=null;dragRect=null;}
-    if(e.touches.length<2) _pinchDist=null;
-  },{passive:true});
+  boardArea.addEventListener('touchstart', e=>{
+    e.preventDefault();
+    if(!baseVB) return;
+    if(e.touches.length === 1) {
+      _t1 = {x: e.touches[0].clientX, y: e.touches[0].clientY};
+      _pinchStart = null;
+    } else if(e.touches.length >= 2) {
+      _t1 = null;
+      const ax=e.touches[0].clientX, ay=e.touches[0].clientY;
+      const bx=e.touches[1].clientX, by=e.touches[1].clientY;
+      const vb = svgEl.getAttribute('viewBox').split(/[\s,]+/).map(Number);
+      _pinchStart = {
+        dist: Math.hypot(bx-ax, by-ay),
+        midX: (ax+bx)/2, midY: (ay+by)/2,
+        vb
+      };
+    }
+  }, {passive:false});
+
+  boardArea.addEventListener('touchmove', e=>{
+    e.preventDefault();
+    if(!baseVB) return;
+
+    if(_t1 && e.touches.length === 1) {
+      // 1-finger pan — delta in screen px → SVG units via current scale
+      const [cx,cy,cw,ch] = svgEl.getAttribute('viewBox').split(/[\s,]+/).map(Number);
+      const rect = _svgRect();
+      const sc = Math.min(rect.width/cw, rect.height/ch);
+      const dx = (e.touches[0].clientX - _t1.x) / sc;
+      const dy = (e.touches[0].clientY - _t1.y) / sc;
+      const [nx,ny,nw,nh] = _clampVB(cx-dx, cy-dy, cw, ch);
+      _applyVB(svgEl, `${nx} ${ny} ${nw} ${nh}`);
+      _t1 = {x: e.touches[0].clientX, y: e.touches[0].clientY};
+
+    } else if(_pinchStart && e.touches.length >= 2) {
+      // 2-finger pinch-to-zoom + simultaneous pan
+      const {dist:d0, midX:mx0, midY:my0, vb:[ivbX,ivbY,ivbW,ivbH]} = _pinchStart;
+      const ax=e.touches[0].clientX, ay=e.touches[0].clientY;
+      const bx=e.touches[1].clientX, by=e.touches[1].clientY;
+      const curDist = Math.hypot(bx-ax, by-ay);
+      const curMidX = (ax+bx)/2, curMidY = (ay+by)/2;
+
+      // New viewBox dimensions from zoom factor relative to pinch-start state
+      const factor = d0 / curDist;            // <1 = zoom in, >1 = zoom out
+      const nw = Math.max(baseVB.w/8, Math.min(baseVB.w, ivbW * factor));
+      const nh = Math.max(baseVB.h/8, Math.min(baseVB.h, ivbH * factor));
+
+      // SVG point that was under the initial pinch midpoint
+      const rect = _svgRect();
+      const pivot = _toSVG(rect, [ivbX,ivbY,ivbW,ivbH], mx0, my0);
+
+      // New scale after zoom
+      const newSc = Math.min(rect.width/nw, rect.height/nh);
+      const newOx = (rect.width  - nw*newSc) / 2;
+      const newOy = (rect.height - nh*newSc) / 2;
+
+      // Position viewBox so pivot stays under current midpoint (handles pan too)
+      const nx0 = pivot.x - (curMidX - rect.left - newOx) / newSc;
+      const ny0 = pivot.y - (curMidY - rect.top  - newOy) / newSc;
+      const [nx,ny] = _clampVB(nx0, ny0, nw, nh);
+      _applyVB(svgEl, `${nx} ${ny} ${nw} ${nh}`);
+    }
+  }, {passive:false});
+
+  boardArea.addEventListener('touchend', e=>{
+    if(e.touches.length === 0) { _t1=null; _pinchStart=null; }
+    else if(e.touches.length === 1) {
+      _pinchStart=null;
+      _t1 = {x: e.touches[0].clientX, y: e.touches[0].clientY};
+    }
+  }, {passive:true});
 }
 
-window.addEventListener('resize',()=>{ if(G&&G.players) renderTrains(); });
+window.addEventListener('resize',()=>{ _svgBoardRects=null; if(G&&G.players) renderTrains(); });
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
 // Kick player from Firebase on page hide (reload, tab close, navigate away)
