@@ -1939,7 +1939,7 @@ const LINES = {
   'M60':{stations:['125 St-Broadway','125 St-St Nicholas Av','125 St-Lexington Av','125 St-2 Av','Astoria Blvd']},
   'M86':{stations:['86 St-1','86 St-A','86 St','86 St-Q']},
   'M23':{stations:['23 St-A','23 St-1','23 St','23 St-4']},
-  'B46':{stations:['Utica Av','Crown Heights-Utica Av']},
+  'B46':{stations:['Utica Av','Crown Heights-Utica Av','Canarsie-Rockaway Pkwy']},
   'Q53':{stations:['Woodhaven Blvd','Woodhaven Blvd-J','Rockaway Blvd']},
 };
 
@@ -2366,7 +2366,7 @@ function _renderServiceAlerts() {
   el.innerHTML = entries.map(([line, d]) => {
     const m = LINE_META[line]||{color:'#555',text:'#fff'};
     const icon = d.type==='breakdown'?'🔴':d.type==='delay'?'🟡':'🔵';
-    const desc = d.type==='breakdown'?'No service — Breakdown':d.type==='medical'?'Medical emergency — stops skipped':'Delays in effect';
+    const desc = d.type==='breakdown'?'No service — line shut down':d.type==='medical'?'No service — Medical Emergency':'Delays in effect';
     const remedy = d.type==='breakdown'?'Handyman':d.type==='medical'?'Ambulance':'Schedule';
     return `<div class="svc-alert svc-${d.type}">
       <div class="svc-alert-header"><span class="line-badge" style="background:${m.color};color:${m.text};font-size:10px;padding:1px 6px;border-radius:3px">${line}</span> ${icon} ${d.type.toUpperCase()}</div>
