@@ -1320,6 +1320,7 @@ function _attachMPListeners(roomCode,playerList,config) {
     const prevTurn=G.currentPlayer;
     const prevLastDist=G.lastDisturbance;
     Object.assign(G,data);
+    if(!G.disturbances) G.disturbances={}; // Firebase drops empty objects
     _stationLines=null; _lineDistFor=null;
     drawnThisTurn=false; selectedCard=null; _lastLogLen=-1; _lastLogTail=''; _lastHandKey=''; _svgBoardRects=null;
     // Show disturbance reveal for players who didn't play the card
@@ -2949,6 +2950,8 @@ async function playSolution(card, player, isHuman) {
     if(target===null) return CANCELLED;
   } else { target=(player.line&&targets.includes(player.line))?player.line:targets[0]; }
   delete G.disturbances[target];
+  // If fixing a medical emergency, immediately clear skipMove for players on that line
+  if(fixes === 'medical') G.players.filter(p=>p.line===target).forEach(p=>p.skipMove=false);
   player.solutionsProvided = (player.solutionsProvided||0) + 1;
   await syncGameState();
   await showSolutionReveal(card, player, target, fixes);
