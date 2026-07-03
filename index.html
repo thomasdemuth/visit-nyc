@@ -742,6 +742,39 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
       </div>
     </div>
     <div id="bots-section" class="bots-section"></div>
+    <div class="lobby-section" style="margin-top:14px">
+      <div class="lobby-section-label">Game Settings</div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Disable Disturbance Cards</div><div class="toggle-sub">Removes Breakdown, Medical Emergency &amp; Delay</div></div>
+        <label class="toggle-switch"><input type="checkbox" id="solo-no-disturbance"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Disable Solution Cards</div><div class="toggle-sub">Removes Handyman, Ambulance &amp; Schedule</div></div>
+        <label class="toggle-switch"><input type="checkbox" id="solo-no-solution"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Auto-Swipe at Start</div><div class="toggle-sub">Players begin on subway — no Metrocard needed</div></div>
+        <label class="toggle-switch"><input type="checkbox" id="solo-auto-swipe"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="slider-row" style="margin-top:6px">
+        <label>Hand size</label>
+        <input type="range" min="3" max="7" step="1" value="5" id="solo-hand-size" oninput="document.getElementById('solo-hand-size-val').textContent=this.value">
+        <div class="slider-val" id="solo-hand-size-val">5</div>
+      </div>
+      <div class="toggle-row" style="margin-top:4px">
+        <div><div class="toggle-label">Turn Time Limit</div></div>
+        <label class="toggle-switch"><input type="checkbox" id="solo-timer-on" onchange="document.getElementById('solo-timer-slider-row').style.display=this.checked?'flex':'none'"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="slider-row" id="solo-timer-slider-row" style="display:none">
+        <label>Seconds</label>
+        <input type="range" min="15" max="120" step="5" value="60" id="solo-timer-secs" oninput="document.getElementById('solo-timer-secs-val').textContent=this.value+'s'">
+        <div class="slider-val" id="solo-timer-secs-val">60s</div>
+      </div>
+      <div class="toggle-row" style="margin-top:4px">
+        <div><div class="toggle-label">Extreme Mode</div><div class="toggle-sub">A random disturbance hits a random line every 2 turns</div></div>
+        <label class="toggle-switch"><input type="checkbox" id="solo-extreme-mode"><span class="toggle-slider"></span></label>
+      </div>
+    </div>
     <div class="setup-actions">
       <button class="btn btn-secondary" onclick="showScreen('welcome')">Back</button>
       <button class="btn btn-primary" onclick="startGame()">Board the Train!</button>
@@ -1214,7 +1247,11 @@ async function startMPGame() {
   await getDB().ref(`rooms/${MP.roomCode}/config`).set(config);
   await getDB().ref(`rooms/${MP.roomCode}/players/${myUid()}`).update({name:hostName,color:_hostColor});
   MP.config=config;
-  await getDB().ref(`rooms/${MP.roomCode}/meta/state`).set('route-picking');
+  await getDB().ref(`rooms/${MP.roomCode}/meta`).update({
+    routePickerRng: Math.random(),
+    firstPlayerRng: Math.random(),
+    state: 'route-picking'
+  });
 }
 
 // ── Transition to game ──
@@ -1229,14 +1266,27 @@ async function _onMPGameStart() {
     .sort(([,a],[,b])=>(a.isHost?-1:1)-(b.isHost?-1:1)||a.joinedAt-b.joinedAt)
     .map(([uid,p])=>({uid,name:p.name,color:p.color}));
   MP.myPlayerIndex=Math.max(0,playerList.findIndex(p=>p.uid===myUid()));
+
+  // Random picker and first player, seeded by host
+  const pickerIdx=Math.floor((roomData.meta.routePickerRng||0)*playerList.length)%playerList.length;
+  MP.amPicker=playerList[pickerIdx]?.uid===myUid();
+  MP.routePickerName=playerList[pickerIdx]?.name||'Someone';
+  MP.firstPlayerIdx=Math.floor((roomData.meta.firstPlayerRng||0)*playerList.length)%playerList.length;
+
   mpOff();
   showScreen('game');
   ['bottom-wrap','game-panel','bottom-left-ctrls'].forEach(id=>document.getElementById(id).classList.add('ui-hidden'));
   const chatSection=document.getElementById('mp-chat-section'); if(chatSection) chatSection.style.display='';
   await buildSVGMap();
   _attachMPListeners(roomCode,playerList,roomData.config);
-  if(MP.isHost) await _mpHostIntro(playerList,roomData.config);
-  else await _mpGuestWait(roomCode,playerList,roomData.config);
+
+  if(MP.amPicker) {
+    MP._routeDeck=shuffle([...ROUTE_CARDS]);
+    MP._pickingRoute=true;
+  } else {
+    MP._spectatorIntro=true;
+  }
+  await introSequence();
 }
 
 function _attachMPListeners(roomCode,playerList,config) {
@@ -1332,7 +1382,7 @@ async function _startMPPlayPhase(roomCode,playerList,config) {
     dir:1,hand:[],metrocardPlayed:!!config.autoSwipe,turnsWaited:0,skipMove:false});
   const players=playerList.map(p=>mkP(p.name,p.color));
   const discard=[deck.pop()];
-  G={players,deck,discard,route:routeObj,currentPlayer:0,disturbances:{},log:[]};
+  G={players,deck,discard,route:routeObj,currentPlayer:MP?.firstPlayerIdx||0,disturbances:{},log:[]};
   drawnThisTurn=false; selectedCard=null; _lastLogLen=-1; _lastLogTail=''; _lastHandKey=''; _svgBoardRects=null;
   const hs=config.handSize||5;
   for(let i=0;i<hs;i++) players.forEach(p=>{if(G.deck.length)p.hand.push(G.deck.pop());});
@@ -1511,7 +1561,7 @@ const SVG_STATIONS = {
   '23 St-A': {x:1160, y:1511},
   '28 St': {x:1341, y:1502},
   '3 Av': {x:1452, y:1548},
-  '3 Av-South Bronx': {x:1539, y:1036},
+  '3 Av-South Bronx': {x:1471, y:1039},
   '33 St': {x:1402, y:1473},
   '33 St-Rawson St': {x:1704, y:1356},
   '34 St-Herald Sq': {x:1300, y:1474},
@@ -1985,7 +2035,7 @@ function initGame(playerName, color, opponents, config) {
   ];
   // Don't deal cards here — intro animation deals them
   const discard = [deck.pop()];
-  G = {players,deck,discard,route,currentPlayer:0,disturbances:{},log:[],startTime:Date.now(),lastDisturbance:null};
+  G = {players,deck,discard,route,currentPlayer:0,disturbances:{},log:[],startTime:Date.now(),lastDisturbance:null,extremeMode:!!cfg.extremeMode,totalTurns:0};
   drawnThisTurn = false; selectedCard = null;
 }
 
@@ -3123,6 +3173,21 @@ function endTurn() {
   stopTurnTimer();
   seedDiscardIfEmpty(); // keep discard visible; seeds from deck if empty
   G.currentPlayer=(G.currentPlayer+1)%G.players.length;
+  if(!MP && G.extremeMode) {
+    G.totalTurns=(G.totalTurns||0)+1;
+    if(G.totalTurns%2===0) {
+      const available=Object.keys(LINES).filter(l=>!G.disturbances[l]&&!isBus(l));
+      if(available.length>0) {
+        const target=available[Math.floor(Math.random()*available.length)];
+        const dtype=['breakdown','medical','delay'][Math.floor(Math.random()*3)];
+        G.disturbances[target]={type:dtype,by:'System'};
+        G.lastDisturbance={line:target,type:dtype,by:'System',ts:Date.now()};
+        if(dtype==='medical') G.players.filter(p=>p.line===target).forEach(p=>p.skipMove=true);
+        renderDisturbances();
+        addLog(`⚠️ System: ${dtype} on ${lb(target)} line!`,'bad');
+      }
+    }
+  }
   renderAll();
   updateTurnGlow();
   if(MP) {
@@ -3565,7 +3630,16 @@ async function startGame() {
   const opponents = botSetups.slice(0,numOpponents).map((b,i)=>({
     name:BOT_NAMES[i%BOT_NAMES.length], color:b.color, difficulty:b.difficulty
   }));
-  initGame(name, selectedColor, opponents);
+  const soloTimerOn = document.getElementById('solo-timer-on').checked;
+  const config = {
+    disableDisturbance: document.getElementById('solo-no-disturbance').checked,
+    disableSolution: document.getElementById('solo-no-solution').checked,
+    autoSwipe: document.getElementById('solo-auto-swipe').checked,
+    handSize: +document.getElementById('solo-hand-size').value,
+    turnTimeLimitSecs: soloTimerOn ? +document.getElementById('solo-timer-secs').value : 0,
+    extremeMode: document.getElementById('solo-extreme-mode').checked
+  };
+  initGame(name, selectedColor, opponents, config);
   showScreen('game');
   ['bottom-wrap','game-panel','bottom-left-ctrls'].forEach(id=>document.getElementById(id).classList.add('ui-hidden'));
   await buildSVGMap();
@@ -3637,7 +3711,6 @@ async function introSequence() {
   await sleep(120);
 
   // ── Shuffle jitter before fanning out ──
-  snd('shuffle');
   for(let s=0;s<6;s++){
     cards.forEach(c=>{
       const jx = (Math.random()-0.5)*26;
@@ -3666,26 +3739,37 @@ async function introSequence() {
   // ── Prompt the player to pick a card ──
   const promptEl = document.createElement('div');
   promptEl.id = 'intro-pick-prompt';
-  promptEl.textContent = 'Choose a route card';
+  promptEl.textContent = MP?._spectatorIntro ? `Waiting for ${MP.routePickerName} to pick…` : 'Choose a route card';
   fanEl.appendChild(promptEl);
   await sleep(30);
   promptEl.classList.add('show');
 
   const baseTransforms = cards.map((c,i)=>`translateX(calc(-50% + ${tx[i]}px)) rotate(${angles[i]}deg)`);
-  cards.forEach((c,i)=>{
-    c.style.cursor = 'pointer';
-    c.addEventListener('mouseenter', ()=>{ c.style.transform = baseTransforms[i] + ' translateY(-18px) scale(1.07)'; c.style.zIndex = 50; });
-    c.addEventListener('mouseleave', ()=>{ c.style.transform = baseTransforms[i]; c.style.zIndex = i; });
-  });
 
-  const midIdx = await new Promise(resolve=>{
-    cards.forEach((c,i)=>{ c.onclick = ()=>resolve(i); });
-  });
-  cards.forEach(c=>{ c.onclick = null; c.style.cursor = 'default'; });
+  let midIdx;
+  if(MP?._spectatorIntro) {
+    // Spectator: wait for picker to write route to Firebase, then auto-resolve
+    midIdx = 3;
+    await new Promise(resolve=>{
+      const ref=getDB().ref(`rooms/${MP.roomCode}/route`);
+      const cb=snap=>{ if(snap.val()){ref.off('value',cb); G.route=snap.val(); resolve();} };
+      ref.on('value',cb);
+    });
+  } else {
+    cards.forEach((c,i)=>{
+      c.style.cursor = 'pointer';
+      c.addEventListener('mouseenter', ()=>{ c.style.transform = baseTransforms[i] + ' translateY(-18px) scale(1.07)'; c.style.zIndex = 50; });
+      c.addEventListener('mouseleave', ()=>{ c.style.transform = baseTransforms[i]; c.style.zIndex = i; });
+    });
+    midIdx = await new Promise(resolve=>{
+      cards.forEach((c,i)=>{ c.onclick = ()=>resolve(i); });
+    });
+    cards.forEach(c=>{ c.onclick = null; c.style.cursor = 'default'; });
+  }
   promptEl.classList.remove('show');
   promptEl.remove();
 
-  // In MP host mode, assign the chosen route card now
+  // Picker: assign chosen route card (spectators already have G.route from Firebase)
   if(MP?._pickingRoute) G.route = MP._routeDeck[midIdx % MP._routeDeck.length];
 
   // Lift the chosen card
@@ -3739,22 +3823,34 @@ async function introSequence() {
 
   await sleep(800);
 
+  // ── MP picker: write route to Firebase now (lets spectators start their reveal) ──
+  if(MP?._pickingRoute) {
+    MP._pickingRoute = false;
+    const r = G.route;
+    await getDB().ref(`rooms/${MP.roomCode}/route`).set({img:r.img,startStation:r.startStation,startLabel:r.startLabel,endStation:r.endStation,endLabel:r.endLabel});
+  }
+
+  // ── MP spectator: go straight to route confirm overlay ──
+  if(MP?._spectatorIntro) {
+    MP._spectatorIntro = false;
+    overlay.style.transition='opacity .5s ease'; overlay.style.opacity='0';
+    setTimeout(()=>{overlay.classList.add('hidden');overlay.style.opacity='';overlay.style.transition='';},500);
+    flipWrap.remove();
+    _showMPRouteConfirm(G.route);
+    return;
+  }
+
   // ── Confirm button — card is centered and revealed ──
   document.getElementById('intro-confirm-btn').classList.add('show');
   await new Promise(r=>{ confirmRouteResolve=r; });
   document.getElementById('intro-confirm-btn').classList.remove('show');
 
-  // ── MP host: write route to Firebase, show confirm screen, return early ──
-  if(MP?._pickingRoute) {
-    MP._pickingRoute = false;
-    const r = G.route;
-    await getDB().ref(`rooms/${MP.roomCode}/route`).set({img:r.img,startStation:r.startStation,startLabel:r.startLabel,endStation:r.endStation,endLabel:r.endLabel});
-    await getDB().ref(`rooms/${MP.roomCode}/meta/state`).set('route-confirming');
-    await getDB().ref(`rooms/${MP.roomCode}/routeConfirmed/${myUid()}`).set(true);
+  // ── MP picker: show route confirm overlay (they confirm there like everyone else) ──
+  if(MP) {
     overlay.style.transition='opacity .5s ease'; overlay.style.opacity='0';
     setTimeout(()=>{overlay.classList.add('hidden');overlay.style.opacity='';overlay.style.transition='';},500);
     flipWrap.remove();
-    _showMPRouteConfirm(r);
+    _showMPRouteConfirm(G.route);
     return;
   }
 
