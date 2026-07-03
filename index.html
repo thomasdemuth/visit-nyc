@@ -142,19 +142,19 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
 #hand-inner{
   position:relative;display:flex;align-items:flex-end;justify-content:center;
   padding:0 20px;
+  filter:drop-shadow(0 10px 22px rgba(0,0,0,0.95)) drop-shadow(0 18px 40px rgba(0,0,0,0.7));
 }
 .hand-card{
   position:relative;width:100px;height:138px;
   border-radius:8px;cursor:pointer;
   margin:0 -22px;
   transform-origin:bottom center;
-  transition:transform .22s cubic-bezier(.2,0,.2,1),box-shadow .22s;
+  transition:transform .22s cubic-bezier(.2,0,.2,1);
   border:2px solid transparent;
   flex-shrink:0;
-  box-shadow:0 8px 18px rgba(0,0,0,0.75), 0 16px 40px rgba(0,0,0,0.45);
 }
 .hand-card img{width:100%;height:100%;object-fit:cover;border-radius:6px;display:block}
-.hand-card.selected{border-color:#FCCC0A !important;box-shadow:0 0 18px rgba(252,204,10,.5) !important}
+.hand-card.selected{border-color:#FCCC0A !important;filter:drop-shadow(0 0 10px rgba(252,204,10,.7))}
 .hand-card-fallback{
   width:100%;height:100%;border-radius:6px;background:#1a3a5c;border:1px solid #2d5a8c;
   display:flex;align-items:center;justify-content:center;
@@ -250,7 +250,11 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
 /* ── DISTURBANCE REVEAL ── */
 #disturbance-reveal{position:fixed;inset:0;z-index:600;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.86);cursor:pointer}
 #disturbance-reveal.active{display:flex}
+#disturbance-reveal.solution{background:rgba(0,12,4,0.88)}
+#disturbance-reveal.transfer{background:rgba(10,0,14,0.88)}
 #dr-card{width:150px;border-radius:12px;box-shadow:0 0 60px rgba(200,0,0,0.4)}
+#disturbance-reveal.solution #dr-card{box-shadow:0 0 60px rgba(0,180,80,0.55)}
+#disturbance-reveal.transfer #dr-card{box-shadow:0 0 60px rgba(160,80,255,0.6)}
 #dr-card.drop{animation:dr-drop .45s cubic-bezier(.34,1.56,.64,1) both}
 #dr-message{margin-top:20px;text-align:center;font-size:clamp(14px,2.5vw,19px);color:#eee;max-width:min(400px,85vw);line-height:1.6;opacity:0;transform:translateY(8px);transition:opacity .4s ease,transform .4s ease}
 #dr-message.vis{opacity:1;transform:translateY(0)}
@@ -2236,7 +2240,9 @@ function renderDisturbances() {
       if(d.type==='breakdown') g.classList.add('dist-anim-bd');
       else if(d.type==='medical') g.classList.add('dist-anim-med');
 
-      svgEl.appendChild(g);
+      const stationsLayer = svgEl.querySelector('#h');
+      if(stationsLayer) svgEl.insertBefore(g, stationsLayer);
+      else svgEl.appendChild(g);
 
       // Hover tooltip on the overlay's colored paths
       if(tooltip) {
@@ -2837,6 +2843,8 @@ async function playTransfer(card, player, isHuman) {
   } else { choice=avail[0]; newDir=1; }
   const prevLine = target.line;
   doTransfer(target, choice.line, newDir, choice.via);
+  await syncGameState();
+  await showForcedTransferReveal(card, player, target, prevLine, choice.line);
   addLog(`${player.name} forced ${target.name} off ${lb(prevLine)||''} onto ${lb(choice.line)} ${choice.line}!`,'bad');
   returnToDeck(card);
   renderAll(); await sleep(300);
@@ -2892,6 +2900,8 @@ async function playSolution(card, player, isHuman) {
   } else { target=(player.line&&targets.includes(player.line))?player.line:targets[0]; }
   delete G.disturbances[target];
   player.solutionsProvided = (player.solutionsProvided||0) + 1;
+  await syncGameState();
+  await showSolutionReveal(card, player, target, fixes);
   addLog(`${player.name} fixed the ${fixes} on ${lb(target)} ${target} line — back in service!`,'good');
   returnToDeck(card);
   renderDisturbances(); await sleep(300);
@@ -2932,6 +2942,97 @@ async function showDisturbanceReveal(card, player, targetLine, dtype) {
     const dismiss = (e) => {
       e.preventDefault();
       el.classList.remove('active');
+      el.removeEventListener('click', dismiss);
+      el.removeEventListener('touchend', dismiss);
+      resolve();
+    };
+    setTimeout(()=>{
+      el.addEventListener('click', dismiss);
+      el.addEventListener('touchend', dismiss);
+    }, 220);
+  });
+}
+
+async function showSolutionReveal(card, player, targetLine, fixes) {
+  snd('solution');
+  const typeLabel = {breakdown:'Breakdown', medical:'Medical Emergency', delay:'Delay'}[fixes] || fixes;
+  const el = document.getElementById('disturbance-reveal');
+  const cardImg = document.getElementById('dr-card');
+  const msgEl = document.getElementById('dr-message');
+  const dismissEl = document.getElementById('dr-dismiss');
+  el.classList.add('solution');
+  if(cardImg) {
+    if(card?.img) {
+      cardImg.src = card.img;
+      cardImg.style.display = 'block';
+      cardImg.classList.remove('drop');
+      cardImg.offsetWidth;
+      cardImg.classList.add('drop');
+    } else {
+      cardImg.style.display = 'none';
+    }
+  }
+  const m = LINE_META[targetLine]||{color:'#555',text:'#fff'};
+  if(msgEl) {
+    msgEl.innerHTML = `<strong>${player.name}</strong> cleared the <strong>${typeLabel}</strong> on the ` +
+      `<span class="line-badge" style="background:${m.color};color:${m.text};font-size:14px;padding:2px 8px">${targetLine}</span> line.<br>` +
+      `<span style="color:#4ade80;font-weight:700">✓ Back in service!</span>`;
+    msgEl.classList.remove('vis');
+    dismissEl?.classList.remove('vis');
+    setTimeout(()=>{ msgEl.classList.add('vis'); }, 330);
+    setTimeout(()=>{ dismissEl?.classList.add('vis'); }, 880);
+  }
+  el.classList.add('active');
+  return new Promise(resolve => {
+    const dismiss = (e) => {
+      e.preventDefault();
+      el.classList.remove('active', 'solution');
+      el.removeEventListener('click', dismiss);
+      el.removeEventListener('touchend', dismiss);
+      resolve();
+    };
+    setTimeout(()=>{
+      el.addEventListener('click', dismiss);
+      el.addEventListener('touchend', dismiss);
+    }, 220);
+  });
+}
+
+async function showForcedTransferReveal(card, player, target, fromLine, toLine) {
+  snd('disturbance');
+  const el = document.getElementById('disturbance-reveal');
+  const cardImg = document.getElementById('dr-card');
+  const msgEl = document.getElementById('dr-message');
+  const dismissEl = document.getElementById('dr-dismiss');
+  el.classList.add('transfer');
+  if(cardImg) {
+    if(card?.img) {
+      cardImg.src = card.img;
+      cardImg.style.display = 'block';
+      cardImg.classList.remove('drop');
+      cardImg.offsetWidth;
+      cardImg.classList.add('drop');
+    } else {
+      cardImg.style.display = 'none';
+    }
+  }
+  const mFrom = LINE_META[fromLine]||{color:'#555',text:'#fff'};
+  const mTo   = LINE_META[toLine]  ||{color:'#555',text:'#fff'};
+  if(msgEl) {
+    msgEl.innerHTML =
+      `<strong>${player.name}</strong> forced <strong>${target.name}</strong> off the ` +
+      `<span class="line-badge" style="background:${mFrom.color};color:${mFrom.text};font-size:14px;padding:2px 8px">${fromLine}</span> ` +
+      `onto the <span class="line-badge" style="background:${mTo.color};color:${mTo.text};font-size:14px;padding:2px 8px">${toLine}</span> line!`;
+    msgEl.classList.remove('vis');
+    dismissEl?.classList.remove('vis');
+    setTimeout(()=>{ msgEl.classList.add('vis'); }, 330);
+    setTimeout(()=>{ dismissEl?.classList.add('vis'); }, 880);
+  }
+  el.classList.add('active');
+  return new Promise(resolve => {
+    const dismiss = (e) => {
+      e.preventDefault();
+      el.classList.remove('active', 'transfer');
       el.removeEventListener('click', dismiss);
       el.removeEventListener('touchend', dismiss);
       resolve();
