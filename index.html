@@ -909,12 +909,7 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
 
 <!-- MP: all players confirm route before animation starts -->
 <div id="mp-route-confirm" class="hidden">
-  <div class="mrc-card">
-    <div class="mrc-label">Your Route</div>
-    <div class="mrc-start" id="mrc-start">—</div>
-    <div class="mrc-arr">↓</div>
-    <div class="mrc-end" id="mrc-end">—</div>
-  </div>
+  <img id="mrc-img" src="" style="width:220px;height:auto;border-radius:12px;border:2px solid #FCCC0A;box-shadow:0 0 40px rgba(252,204,10,.3)">
   <div class="mrc-status" id="mrc-status"></div>
   <button class="btn btn-primary" id="mrc-btn" onclick="mpConfirmRoute()" style="padding:12px 40px">Confirm Route</button>
 </div>
@@ -1359,8 +1354,9 @@ async function _mpGuestWait(roomCode,playerList,config) {
 }
 
 function _showMPRouteConfirm(route) {
-  document.getElementById('mrc-start').textContent=route.startLabel;
-  document.getElementById('mrc-end').textContent=route.endLabel;
+  document.getElementById('mrc-img').src=route.img||'';
+  document.getElementById('mrc-btn').disabled=false;
+  document.getElementById('mrc-btn').textContent='Confirm Route';
   document.getElementById('mp-route-confirm').classList.remove('hidden');
 }
 
@@ -1939,7 +1935,7 @@ const LINES = {
   'M60':{stations:['125 St-Broadway','125 St-St Nicholas Av','125 St-Lexington Av','125 St-2 Av','Astoria Blvd']},
   'M86':{stations:['86 St-1','86 St-A','86 St','86 St-Q']},
   'M23':{stations:['23 St-A','23 St-1','23 St','23 St-4']},
-  'B46':{stations:['Utica Av','Crown Heights-Utica Av','Canarsie-Rockaway Pkwy']},
+  'B46':{stations:['Hewes St','Myrtle Av-Broadway','Utica Av','Crown Heights-Utica Av','Flatbush Av-Brooklyn College']},
   'Q53':{stations:['Woodhaven Blvd','Woodhaven Blvd-J','Rockaway Blvd']},
 };
 
@@ -2387,7 +2383,7 @@ function renderPlayers() {
       return `→ ${terminal}`;
     })();
     const lineInfo = p.line ? `${lb(p.line)} <span class="player-dir">${dirLabel}</span>` : '';
-    return `<div class="player-row ${active?'active':''}" data-pi="${i}">
+    return `<div class="player-row ${active?'active':''}" data-pi="${i}" onclick="focusPlayer(${i})" style="cursor:pointer">
       <div class="player-dot" style="background:${p.color}"></div>
       <div style="flex:1;min-width:0">
         <div class="player-name">${p.name}${p.isAI?' 🤖':''}</div>
@@ -4036,6 +4032,17 @@ function _applyVB(svgEl, vb) {
     clearTimeout(_trainDebounce);
     _trainDebounce = setTimeout(()=>{ if(G&&G.players) renderTrains(); }, 120);
   });
+}
+
+function focusPlayer(pi) {
+  const p = G?.players?.[pi];
+  if(!p || !p.station) return;
+  const svgEl = document.querySelector('#board-area svg');
+  if(!svgEl) return;
+  const coord = getSVGCoord(p.station);
+  if(!coord) return;
+  const zW = 480, zH = 400;
+  animatePan(svgEl, coord.x - zW/2, coord.y - zH/2, zW, zH, 600, renderTrains);
 }
 
 function doZoom(factor) {
