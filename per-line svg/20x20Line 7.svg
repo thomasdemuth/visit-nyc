@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="a" data-name="Layer 19" xmlns="http://www.w3.org/2000/svg" width="1440" height="1440" viewBox="0 0 1440 1440">
+  <path d="M696.381,609.246h109.638c5.85,0,11.46-2.324,15.596-6.46l71.416-71.416c2.068-2.068,3.23-4.873,3.23-7.798v-115.928" fill="none" stroke="#9f378b" stroke-miterlimit="10" stroke-width="5"/>
+  <g>
+    <path d="M151.672,728.798v-28.759c0-6.091,4.937-11.028,11.028-11.028h479.468" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="8"/>
+    <path d="M151.672,728.798v-28.759c0-6.091,4.937-11.028,11.028-11.028h479.468" fill="none" stroke="#9f378b" stroke-miterlimit="10" stroke-width="5"/>
+  </g>
+  <g>
+    <path d="M696.381,609.246h-18.585c-5.523,0-10,4.477-10,10v59.766c0,5.523-4.477,10-10,10h-21.072" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="8"/>
+    <path d="M696.381,609.246h-18.585c-5.523,0-10,4.477-10,10v59.766c0,5.523-4.477,10-10,10h-21.072" fill="none" stroke="#9f378b" stroke-miterlimit="10" stroke-width="5"/>
+  </g>
+</svg>
