@@ -1314,6 +1314,8 @@ function _attachMPListeners(roomCode,playerList,config) {
     if(isMyTurn()) return; // we're the source of truth on our turn
     const prevTurn=G.currentPlayer;
     const prevLastDist=G.lastDisturbance;
+    const prevLastSolution=G.lastSolution;
+    const prevLastTransfer=G.lastTransfer;
     Object.assign(G,data);
     if(!G.disturbances) G.disturbances={}; // Firebase drops empty objects
     _stationLines=null; _lineDistFor=null;
@@ -1323,6 +1325,23 @@ function _attachMPListeners(roomCode,playerList,config) {
       if(data.lastDisturbance.by !== myPlayer()?.name) {
         const d=data.lastDisturbance;
         await showDisturbanceReveal(null, {name:d.by}, d.line, d.type);
+      }
+    }
+    // Show solution reveal for players who didn't play the card
+    if(data.lastSolution && data.lastSolution.ts !== (prevLastSolution?.ts ?? -1)) {
+      if(data.lastSolution.by !== myPlayer()?.name) {
+        const s=data.lastSolution;
+        const byPlayer = G.players.find(p=>p.name===s.by) || {name:s.by};
+        await showSolutionReveal(null, byPlayer, s.line, s.fixes);
+      }
+    }
+    // Show forced transfer reveal for players who didn't play the card
+    if(data.lastTransfer && data.lastTransfer.ts !== (prevLastTransfer?.ts ?? -1)) {
+      if(data.lastTransfer.by !== myPlayer()?.name) {
+        const t=data.lastTransfer;
+        const byPlayer = G.players.find(p=>p.name===t.by) || {name:t.by};
+        const tgtPlayer = G.players.find(p=>p.name===t.targetName) || {name:t.targetName};
+        await showForcedTransferReveal(null, byPlayer, tgtPlayer, t.fromLine, t.toLine);
       }
     }
     const winP = G.players.find(p=>checkWin(p));
@@ -1520,7 +1539,7 @@ const LINE_SVG_COLORS = {
 // Station positions in SVG viewBox units (3224 × 3002 space)
 // Extracted from Visit NYC PRINT.svg (Illustrator source) station tiles + name labels
 const SVG_STATIONS = {
-  'New Jersey':                    {x: 960, y:1480},
+  'New Jersey':                    {x: 960, y:1780},
   '1 Av': {x:1489, y:1548},
   '103 St': {x:1160, y:1216},
   '106 St': {x:1481, y:1202},
@@ -2032,7 +2051,7 @@ function initGame(playerName, color, opponents, config) {
   ];
   // Don't deal cards here — intro animation deals them
   const discard = [deck.pop()];
-  G = {players,deck,discard,route,currentPlayer:0,disturbances:{},log:[],startTime:Date.now(),lastDisturbance:null,extremeMode:!!cfg.extremeMode,totalTurns:0};
+  G = {players,deck,discard,route,currentPlayer:0,disturbances:{},log:[],startTime:Date.now(),lastDisturbance:null,lastSolution:null,lastTransfer:null,extremeMode:!!cfg.extremeMode,totalTurns:0};
   drawnThisTurn = false; selectedCard = null;
 }
 
@@ -2236,6 +2255,8 @@ function renderTrains() {
     el.querySelector('.train-init').textContent = p.name[0].toUpperCase();
     el.querySelector('.train-name-tag').textContent = p.name;
 
+    if(p.station === 'New Jersey') { el.style.display = 'none'; return; }
+    el.style.display = '';
     const coord = getSVGCoord(p.station);
     const g = grp[p.station]||[i];
     const pos = g.indexOf(i);
@@ -2388,7 +2409,7 @@ function renderPlayers() {
       <div style="flex:1;min-width:0">
         <div class="player-name">${p.name}${p.isAI?' 🤖':''}</div>
         ${lineInfo ? `<div class="player-loc">${lineInfo}</div>` : ''}
-        <div class="player-loc">${p.station.slice(0,22)}</div>
+        <div class="player-loc">${p.station==='New Jersey'?'<em style="color:#555">Not started</em>':p.station.slice(0,22)}</div>
       </div>
     </div>`;
   }).join('');
@@ -2890,6 +2911,7 @@ async function playTransfer(card, player, isHuman) {
   } else { choice=avail[0]; newDir=1; }
   const prevLine = target.line;
   doTransfer(target, choice.line, newDir, choice.via);
+  G.lastTransfer = {targetName:target.name, fromLine:prevLine, toLine:choice.line, by:player.name, ts:Date.now()};
   await syncGameState();
   await showForcedTransferReveal(card, player, target, prevLine, choice.line);
   addLog(`${player.name} forced ${target.name} off ${lb(prevLine)||''} onto ${lb(choice.line)} ${choice.line}!`,'bad');
@@ -2904,7 +2926,7 @@ async function playDisturbance(card, player, isHuman) {
   if(available.length===0) { returnToDeck(card); return; }
   let target;
   if(isHuman) {
-    target = await showModal(`Apply ${card.label}`,'Which line to disrupt?', available.slice(0,20).map(l=>({label:lb(l)+' '+l,value:l})), {cancellable:true, grid:true});
+    target = await showModal(`Apply ${card.label}`,'Which line to disrupt?', available.map(l=>({label:lb(l)+' '+l,value:l})), {cancellable:true, grid:true});
     if(target===null) return CANCELLED;
   } else {
     const hl = G.players[0].line;
@@ -2949,6 +2971,7 @@ async function playSolution(card, player, isHuman) {
   // If fixing a medical emergency, immediately clear skipMove for players on that line
   if(fixes === 'medical') G.players.filter(p=>p.line===target).forEach(p=>p.skipMove=false);
   player.solutionsProvided = (player.solutionsProvided||0) + 1;
+  G.lastSolution = {line:target, fixes, by:player.name, ts:Date.now()};
   await syncGameState();
   await showSolutionReveal(card, player, target, fixes);
   addLog(`${player.name} fixed the ${fixes} on ${lb(target)} ${target} line — back in service!`,'good');
