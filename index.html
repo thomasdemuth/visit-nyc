@@ -1436,6 +1436,7 @@ function _attachMPListeners(roomCode,playerList,config) {
       if(data.lastSolution.by !== myPlayer()?.name) {
         const s=data.lastSolution;
         const byPlayer = G.players.find(p=>p.name===s.by) || {name:s.by};
+        renderDisturbances(); // clear map and alerts before showing the reveal
         await showSolutionReveal(null, byPlayer, s.line, s.fixes);
       }
     }
@@ -3150,10 +3151,10 @@ async function playSolution(card, player, isHuman) {
   player.solutionsProvided = (player.solutionsProvided||0) + 1;
   G.lastSolution = {line:target, fixes, by:player.name, ts:Date.now()};
   await syncGameState();
+  renderDisturbances(); // clear map and alerts before showing the reveal
   await showSolutionReveal(card, player, target, fixes);
   addLog(`${player.name} fixed the ${fixes} on ${lb(target)} ${target} line — back in service!`,'good');
   returnToDeck(card);
-  renderDisturbances(); await sleep(300);
 }
 
 async function showDisturbanceReveal(card, player, targetLine, dtype) {
