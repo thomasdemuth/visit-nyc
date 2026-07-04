@@ -596,16 +596,13 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
 /* ── Party Mode ── */
 /* Board screen (host): full map, no hand */
 #party-board-indicator{display:none;position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:90;background:rgba(5,8,20,.9);border:1px solid #1f2d40;border-radius:10px;padding:8px 20px;font-size:13px;text-align:center;pointer-events:none;backdrop-filter:blur(8px);white-space:nowrap}
-#game-screen.party-board #party-board-indicator{display:block}
-#game-screen.party-board #bottom-wrap{display:none!important}
+#game.party-board #party-board-indicator{display:block}
+#game.party-board #bottom-wrap{display:none!important}
 
 /* Controller top panel (guests) */
-#party-ctrl-top{display:none;flex-direction:column;align-items:center;gap:10px;background:#0d0d1a;padding:14px 16px 10px;flex-shrink:0;border-bottom:1px solid #1a2030}
-#game-screen.party-controller #party-ctrl-top{display:flex}
-#pct-route{font-size:12px;color:#777;text-align:center}
-#pct-route strong{color:#fff;font-size:15px}
-#pct-turn-label{font-size:15px;font-weight:700;color:#888;text-align:center;min-height:20px}
-#pct-disturbances{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;min-height:16px}
+#party-ctrl-top{display:none;flex-direction:column;align-items:center;gap:12px;background:#0d0d1a;padding:16px 16px 12px;flex-shrink:0;width:100%;border-bottom:1px solid #1a2030}
+#game.party-controller #party-ctrl-top{display:flex;flex:1}
+#pct-turn-label{font-size:16px;font-weight:700;color:#888;text-align:center;min-height:22px}
 #pct-piles{display:flex;gap:14px;justify-content:center}
 .pct-pile{background:#111827;border:1px solid #1f2d40;border-radius:12px;padding:10px 22px;text-align:center;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;user-select:none}
 .pct-pile:active{transform:scale(.96)}
@@ -615,15 +612,18 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
 #pct-deck-count{font-size:11px;color:#FCCC0A;font-weight:700}
 
 /* Controller layout: hide map, expand hand to fill screen */
-#game-screen.party-controller{display:flex;flex-direction:column;background:#0a0a12}
-#game-screen.party-controller #board-area{flex:0;height:0!important;min-height:0;overflow:hidden}
-#game-screen.party-controller #bottom-wrap{position:relative!important;flex:1;display:flex;flex-direction:column;transform:none!important;opacity:1!important}
-#game-screen.party-controller #hand-strip{flex:1;height:auto;padding-bottom:18px;background:linear-gradient(to top,rgba(0,0,0,.95) 0%,rgba(10,10,18,1) 100%)}
-#game-screen.party-controller .hand-card{width:120px;height:165px;margin:0 -18px}
-#game-screen.party-controller #action-bar{background:rgba(0,0,0,.98);padding:12px 20px 22px;border-top:1px solid #1a2030}
-#game-screen.party-controller #play-btn{font-size:16px;padding:14px 40px}
-#game-screen.party-controller #discard-btn{font-size:14px;padding:12px 22px}
-#game-screen.party-controller .card-tip{bottom:calc(100% + 8px)}
+#game.party-controller{display:flex;flex-direction:column;background:#0a0a12}
+#game.party-controller .game-main{flex:none}
+#game.party-controller #sidebar{display:none}
+#game.party-controller #board-area{flex:0;height:0!important;width:0!important;min-height:0;overflow:hidden}
+#game.party-controller #service-alerts{display:none!important}
+#game.party-controller #bottom-wrap{position:relative!important;flex:1;display:flex;flex-direction:column;transform:none!important;opacity:1!important}
+#game.party-controller #hand-strip{flex:1;height:auto;padding-bottom:18px;background:linear-gradient(to top,rgba(0,0,0,.95) 0%,rgba(10,10,18,1) 100%)}
+#game.party-controller .hand-card{width:120px;height:165px;margin:0 -18px}
+#game.party-controller #action-bar{background:rgba(0,0,0,.98);padding:12px 20px 22px;border-top:1px solid #1a2030}
+#game.party-controller #play-btn{font-size:16px;padding:14px 40px}
+#game.party-controller #discard-btn{font-size:14px;padding:12px 22px}
+#game.party-controller .card-tip{bottom:calc(100% + 8px)}
 </style>
 <!-- Firebase compat SDK (no bundler needed) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -861,11 +861,7 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
 
     <!-- Party Mode: Controller header (phone guests) -->
     <div id="party-ctrl-top">
-      <div id="pct-header">
-        <div id="pct-route"><strong id="pct-start">—</strong> → <strong id="pct-end">—</strong></div>
-        <div id="pct-turn-label">Waiting…</div>
-      </div>
-      <div id="pct-disturbances"></div>
+      <div id="pct-turn-label">Waiting…</div>
       <div id="pct-piles">
         <div class="pct-pile" onclick="drawFromDeck()">
           <img src="action card/Front@6x.png" onerror="this.style.display='none'">
@@ -963,12 +959,12 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
     </div>
   </div>
 
+  <!-- Party Mode: Board-mode indicator (host sees this instead of hand) -->
+  <div id="party-board-indicator">
+    <span id="pbi-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px;vertical-align:middle;background:#888"></span>
+    <span id="pbi-label">Waiting for players…</span>
+  </div>
   <div id="turn-glow"></div>
-</div>
-<!-- Party Mode: Board-mode indicator (host sees this instead of hand) -->
-<div id="party-board-indicator">
-  <span id="pbi-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px;vertical-align:middle;background:#888"></span>
-  <span id="pbi-label">Waiting for players…</span>
 </div>
 <div id="your-turn-banner">YOUR TURN</div>
 
@@ -1515,14 +1511,14 @@ async function _startMPPlayPhase(roomCode,playerList,config) {
   document.getElementById('mp-route-confirm').classList.add('hidden');
 
   // Apply party mode CSS classes before animation
-  const gameScreen=document.getElementById('game-screen');
+  const gameScreen=document.getElementById('game');
   if(config.partyMode) {
     gameScreen.classList.add(MP.isBoard ? 'party-board' : 'party-controller');
   }
 
   await _mpMapAnimation();
-  // Create floating route card in top-right corner (matches solo intro behavior)
-  if(!MP.isBoard) {
+  // Create floating route card in top-right corner (non-party MP only — board has sidebar, controllers have cards-only view)
+  if(!MP.isBoard && !config.partyMode) {
     const cardW=180, cardH=Math.round(180*(124/90));
     const smallW=Math.round(cardW*0.6), smallH=Math.round(cardH*0.6);
     if(_introFlyCard) { _introFlyCard.remove(); _introFlyCard=null; }
@@ -1538,6 +1534,9 @@ async function _startMPPlayPhase(roomCode,playerList,config) {
     ['game-panel','bottom-left-ctrls'].forEach((id,i)=>{
       setTimeout(()=>document.getElementById(id).classList.remove('ui-hidden'),i*130);
     });
+  } else if(config.partyMode) {
+    // Controller: only reveal the hand strip (map/log/tracker hidden by CSS)
+    setTimeout(()=>document.getElementById('bottom-wrap').classList.remove('ui-hidden'), 0);
   } else {
     ['bottom-wrap','game-panel','bottom-left-ctrls'].forEach((id,i)=>{
       setTimeout(()=>document.getElementById(id).classList.remove('ui-hidden'),i*130);
@@ -2710,16 +2709,11 @@ function renderPartyViews() {
 
   if(MP.isBoard) return; // board uses existing map rendering
 
-  // Controller header (guests)
-  const pctStart = document.getElementById('pct-start');
-  const pctEnd = document.getElementById('pct-end');
-  if(pctStart && G.route) pctStart.textContent = G.route.startLabel;
-  if(pctEnd && G.route) pctEnd.textContent = G.route.endLabel;
-
+  // Controller turn label
   const turnLabel = document.getElementById('pct-turn-label');
   if(turnLabel) {
     if(isMyTurnNow) {
-      turnLabel.textContent = drawnThisTurn ? 'Your turn — play or discard' : 'Your turn — draw a card!';
+      turnLabel.textContent = drawnThisTurn ? 'Play or discard a card' : 'Draw a card!';
       turnLabel.style.color = '#FCCC0A';
     } else {
       turnLabel.textContent = cp ? `Waiting for ${cp.name}…` : 'Waiting…';
@@ -2727,19 +2721,7 @@ function renderPartyViews() {
     }
   }
 
-  // Disturbance badges
-  const pctDist = document.getElementById('pct-disturbances');
-  if(pctDist) {
-    pctDist.innerHTML = Object.entries(G.disturbances||{}).map(([line,d])=>{
-      const m = LINE_META[line]||{color:'#555',text:'#fff'};
-      const icon = d.type==='breakdown'?'🔧':d.type==='medical'?'🚑':'⏱';
-      return `<span class="line-badge" style="background:${m.color};color:${m.text};font-size:11px;padding:2px 7px;border-radius:4px" title="${d.type}">${icon} ${line}</span>`;
-    }).join('');
-  }
-
-  // Pile opacity for controller
-  const pctDeckEl = document.querySelector('.pct-pile');
-  if(pctDeckEl) pctDeckEl.style.opacity = (!isMyTurnNow||drawnThisTurn) ? '.45':'1';
+  // Pile opacity: dim when not your turn or already drawn
   const piles = document.querySelectorAll('.pct-pile');
   if(piles[0]) piles[0].style.opacity = (!isMyTurnNow||drawnThisTurn)?'.45':'1';
   if(piles[1]) piles[1].style.opacity = (!isMyTurnNow||drawnThisTurn||!G.discard?.length)?'.45':'1';
