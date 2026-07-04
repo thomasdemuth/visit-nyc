@@ -2075,7 +2075,7 @@ const LINES = {
   '8':{stations:['Pelham Bay Park','Parkchester-E177 St','Hunts Point Av','3 Av-South Bronx']},
   // Bus lines — connect existing subway stations, no SVG path of their own
   'Bx36':{stations:['Pelham Bay Park','West Farms Sq-E Tremont Av','Tremont Av']},
-  'M60':{stations:['125 St-Broadway','125 St-St Nicholas Av','125 St-Lexington Av','125 St-2 Av','Astoria Blvd']},
+  'M60':{stations:['125 St-Broadway','125 St-St Nicholas Av','125 St-Lexington Av','125 St-2 Av','Astoria Blvd','Jackson Heights']},
   'M86':{stations:['86 St-1','86 St-A','86 St','86 St-Q']},
   'M23':{stations:['23 St-A','23 St-1','23 St','23 St-4']},
   'B46':{stations:['Hewes St','Myrtle Av-Broadway','Utica Av','Crown Heights-Utica Av','Flatbush Av-Brooklyn College']},
@@ -2832,6 +2832,13 @@ async function drawFromDeck() {
   if(!isMyTurn()||drawnThisTurn) return;
   if(G.deck.length===0) reshuffleDiscard();
   if(G.deck.length===0) return;
+  // Guarantee a Metrocard on the 3rd+ turn if player hasn't started and doesn't already hold one
+  const _me = myPlayer();
+  if(_me && !_me.metrocardPlayed && (_me.turnsWaited||0) >= 2 && !_me.hand.some(c=>c.type==='metrocard')) {
+    const mcIdx = G.deck.findIndex(c=>c.type==='metrocard');
+    if(mcIdx >= 0) { const [mc]=G.deck.splice(mcIdx,1); G.deck.push(mc); }
+    else G.deck.push({type:'metrocard',stops:0,img:'action card/metrocard@6x.png',label:'Metrocard',id:Math.random()});
+  }
   const card = G.deck.pop();
   drawnThisTurn = true;
   renderDeck(); updateUI();
@@ -3364,6 +3371,11 @@ async function endTurn() {
   drawnThisTurn=false; selectedCard=null; _lastLogLen=-1; _lastLogTail=''; _lastHandKey=''; _svgBoardRects=null;
   stopTurnTimer();
   seedDiscardIfEmpty(); // keep discard visible; seeds from deck if empty
+  // Track human players still waiting to start (AI tracks its own via aiDecide)
+  const _endingPlayer = G.players[G.currentPlayer];
+  if(_endingPlayer && !_endingPlayer.isAI && !_endingPlayer.metrocardPlayed) {
+    _endingPlayer.turnsWaited = (_endingPlayer.turnsWaited||0) + 1;
+  }
   G.currentPlayer=(G.currentPlayer+1)%G.players.length;
 
   // Extreme mode: every 2nd turn, roll for a random disturbance with escalating probability
