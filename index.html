@@ -886,6 +886,7 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
       <!-- Players list + zoom — floating bottom-left -->
       <div id="bottom-left-ctrls">
         <div id="players-list"></div>
+        <button id="fullscreen-btn" class="zoom-btn" title="Toggle fullscreen" onclick="toggleFullscreen()">⛶</button>
         <div id="zoom-ctrls">
           <button class="zoom-btn" title="Zoom in" onclick="doZoom(1/1.4)">+</button>
           <button class="zoom-btn" title="Zoom out" onclick="doZoom(1.4)">−</button>
@@ -4247,6 +4248,23 @@ function focusPlayer(pi) {
   const zW = 480, zH = 400;
   animatePan(svgEl, coord.x - zW/2, coord.y - zH/2, zW, zH, 600, renderTrains);
 }
+
+function toggleFullscreen() {
+  const btn = document.getElementById('fullscreen-btn');
+  if(!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().then(()=>{
+      if(btn) btn.textContent = '✕';
+    }).catch(()=>{});
+  } else {
+    document.exitFullscreen().then(()=>{
+      if(btn) btn.textContent = '⛶';
+    }).catch(()=>{});
+  }
+}
+document.addEventListener('fullscreenchange', ()=>{
+  const btn = document.getElementById('fullscreen-btn');
+  if(btn) btn.textContent = document.fullscreenElement ? '✕' : '⛶';
+});
 
 function doZoom(factor) {
   const svgEl=document.querySelector('#board-area svg');
