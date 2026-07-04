@@ -236,7 +236,7 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
 @keyframes win-bounce{0%{transform:scale(0) rotate(-30deg);opacity:0}60%{transform:scale(1.3) rotate(6deg);opacity:1}80%{transform:scale(.92) rotate(-2deg)}100%{transform:scale(1) rotate(0)}}
 
 /* ── SERVICE ALERTS ── */
-#service-alerts{position:absolute;top:12px;left:12px;z-index:80;display:flex;flex-direction:column;gap:5px;max-width:210px;pointer-events:none}
+#service-alerts{position:fixed;top:12px;left:12px;z-index:80;display:flex;flex-direction:column;gap:5px;max-width:210px;pointer-events:none}
 .svc-alert{background:rgba(0,0,0,0.86);border-left:4px solid #EE352E;border-radius:0 8px 8px 0;padding:7px 11px;font-size:11px;color:#fff;pointer-events:auto;backdrop-filter:blur(6px)}
 .svc-breakdown{border-left-color:#EE352E}
 .svc-delay{border-left-color:#FCCC0A}
@@ -465,10 +465,18 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
 .lobby-card h2{font-size:19px;margin-bottom:22px;color:#FCCC0A;text-transform:uppercase;letter-spacing:1px}
 .lobby-section{margin-bottom:20px}
 .lobby-section-label{font-size:9px;color:#445;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
-.room-code-display{font-size:38px;font-weight:900;letter-spacing:10px;color:#FCCC0A;text-align:center;padding:14px;background:rgba(252,204,10,.06);border:2px solid rgba(252,204,10,.18);border-radius:12px;margin-bottom:8px;font-family:monospace}
+.room-code-display{font-size:38px;font-weight:900;letter-spacing:10px;color:#FCCC0A;text-align:center;padding:14px;background:rgba(252,204,10,.06);border:2px solid rgba(252,204,10,.18);border-radius:12px;margin-bottom:4px;font-family:monospace;cursor:pointer;transition:background .18s,border-color .18s;position:relative;user-select:none}
+.room-code-display:hover{background:rgba(252,204,10,.13);border-color:rgba(252,204,10,.45)}
+.room-code-display::after{content:'Click to copy invite link';position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:rgba(10,14,28,.95);color:#ccc;font-size:10px;font-family:sans-serif;font-weight:400;letter-spacing:.3px;white-space:nowrap;padding:4px 10px;border-radius:6px;pointer-events:none;opacity:0;transition:opacity .15s}
+.room-code-display:hover::after{opacity:1}
+.room-code-display.copied{background:rgba(108,190,69,.1);border-color:rgba(108,190,69,.4);color:#6CBE45}
 .copy-link-btn{width:100%;padding:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#667;font-size:11px;cursor:pointer;transition:all .18s;text-align:center}
 .copy-link-btn:hover{background:rgba(255,255,255,.1);color:#ccc}
 .copy-link-btn.copied{border-color:#6CBE45;color:#6CBE45}
+#qr-section{text-align:center;margin-top:8px}
+#qr-img{width:150px;height:150px;border-radius:10px;border:2px solid rgba(252,204,10,.2);display:block;margin:0 auto 6px;background:#fff;padding:4px}
+#qr-toggle-btn{background:none;border:none;color:#445;font-size:10px;cursor:pointer;padding:2px 6px;border-radius:4px;transition:color .15s}
+#qr-toggle-btn:hover{color:#aaa}
 .toggle-row{display:flex;align-items:flex-start;justify-content:space-between;padding:9px 0;border-bottom:1px solid #111e2e;gap:10px}
 .toggle-row:last-child{border-bottom:none}
 .toggle-label{font-size:12px;color:#ccc;line-height:1.3}
@@ -584,6 +592,38 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
   .hand-card:hover .card-tip { opacity: 0; }
   .hand-card:hover { z-index: auto !important; }
 }
+
+/* ── Party Mode ── */
+/* Board screen (host): full map, no hand */
+#party-board-indicator{display:none;position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:90;background:rgba(5,8,20,.9);border:1px solid #1f2d40;border-radius:10px;padding:8px 20px;font-size:13px;text-align:center;pointer-events:none;backdrop-filter:blur(8px);white-space:nowrap}
+#game-screen.party-board #party-board-indicator{display:block}
+#game-screen.party-board #bottom-wrap{display:none!important}
+
+/* Controller top panel (guests) */
+#party-ctrl-top{display:none;flex-direction:column;align-items:center;gap:10px;background:#0d0d1a;padding:14px 16px 10px;flex-shrink:0;border-bottom:1px solid #1a2030}
+#game-screen.party-controller #party-ctrl-top{display:flex}
+#pct-route{font-size:12px;color:#777;text-align:center}
+#pct-route strong{color:#fff;font-size:15px}
+#pct-turn-label{font-size:15px;font-weight:700;color:#888;text-align:center;min-height:20px}
+#pct-disturbances{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;min-height:16px}
+#pct-piles{display:flex;gap:14px;justify-content:center}
+.pct-pile{background:#111827;border:1px solid #1f2d40;border-radius:12px;padding:10px 22px;text-align:center;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;user-select:none}
+.pct-pile:active{transform:scale(.96)}
+.pct-pile img{width:38px;height:52px;object-fit:cover;border-radius:4px}
+#pct-disc-preview{font-size:22px;line-height:52px;width:38px;text-align:center}
+#pct-disc-preview img{width:38px;height:52px;object-fit:cover;border-radius:4px;display:block}
+#pct-deck-count{font-size:11px;color:#FCCC0A;font-weight:700}
+
+/* Controller layout: hide map, expand hand to fill screen */
+#game-screen.party-controller{display:flex;flex-direction:column;background:#0a0a12}
+#game-screen.party-controller #board-area{flex:0;height:0!important;min-height:0;overflow:hidden}
+#game-screen.party-controller #bottom-wrap{position:relative!important;flex:1;display:flex;flex-direction:column;transform:none!important;opacity:1!important}
+#game-screen.party-controller #hand-strip{flex:1;height:auto;padding-bottom:18px;background:linear-gradient(to top,rgba(0,0,0,.95) 0%,rgba(10,10,18,1) 100%)}
+#game-screen.party-controller .hand-card{width:120px;height:165px;margin:0 -18px}
+#game-screen.party-controller #action-bar{background:rgba(0,0,0,.98);padding:12px 20px 22px;border-top:1px solid #1a2030}
+#game-screen.party-controller #play-btn{font-size:16px;padding:14px 40px}
+#game-screen.party-controller #discard-btn{font-size:14px;padding:12px 22px}
+#game-screen.party-controller .card-tip{bottom:calc(100% + 8px)}
 </style>
 <!-- Firebase compat SDK (no bundler needed) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -624,8 +664,11 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
 
     <div class="lobby-section">
       <div class="lobby-section-label">Room Code</div>
-      <div class="room-code-display" id="host-room-code">——</div>
-      <button class="copy-link-btn" id="copy-link-btn" onclick="copyRoomLink()">📋 Copy invite link</button>
+      <div class="room-code-display" id="host-room-code" onclick="copyRoomLink()">——</div>
+      <div id="qr-section">
+        <img id="qr-img" src="" alt="QR Code" style="display:none">
+        <button id="qr-toggle-btn" onclick="toggleQR()">Hide QR code</button>
+      </div>
     </div>
 
     <div class="lobby-section">
@@ -655,6 +698,14 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
         <label>Seconds</label>
         <input type="range" min="15" max="120" step="5" value="60" id="cfg-timer-secs" oninput="document.getElementById('timer-secs-val').textContent=this.value+'s'">
         <div class="slider-val" id="timer-secs-val">60s</div>
+      </div>
+      <div class="toggle-row" style="margin-top:4px">
+        <div><div class="toggle-label">Extreme Mode</div><div class="toggle-sub">Random disturbances every 2 turns (30% chance, escalates)</div></div>
+        <label class="toggle-switch"><input type="checkbox" id="cfg-extreme-mode"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="toggle-row" style="margin-top:4px">
+        <div><div class="toggle-label">Party Mode</div><div class="toggle-sub">Host shows the board on a TV — players join on phones</div></div>
+        <label class="toggle-switch"><input type="checkbox" id="cfg-party-mode"><span class="toggle-slider"></span></label>
       </div>
     </div>
 
@@ -808,6 +859,26 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
       </div>
     </div>
 
+    <!-- Party Mode: Controller header (phone guests) -->
+    <div id="party-ctrl-top">
+      <div id="pct-header">
+        <div id="pct-route"><strong id="pct-start">—</strong> → <strong id="pct-end">—</strong></div>
+        <div id="pct-turn-label">Waiting…</div>
+      </div>
+      <div id="pct-disturbances"></div>
+      <div id="pct-piles">
+        <div class="pct-pile" onclick="drawFromDeck()">
+          <img src="action card/Front@6x.png" onerror="this.style.display='none'">
+          <span id="pct-deck-count">—</span>
+          <span>DECK</span>
+        </div>
+        <div class="pct-pile" onclick="drawFromDiscard()">
+          <div id="pct-disc-preview">↩</div>
+          <span>DISCARD</span>
+        </div>
+      </div>
+    </div>
+
     <!-- BOARD -->
     <div id="board-area">
       <div id="trains-html-layer"></div>
@@ -893,6 +964,11 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;background:#0a0a12;color:#fff
   </div>
 
   <div id="turn-glow"></div>
+</div>
+<!-- Party Mode: Board-mode indicator (host sees this instead of hand) -->
+<div id="party-board-indicator">
+  <span id="pbi-dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px;vertical-align:middle;background:#888"></span>
+  <span id="pbi-label">Waiting for players…</span>
 </div>
 <div id="your-turn-banner">YOUR TURN</div>
 
@@ -991,8 +1067,8 @@ function myUid() {
 }
 
 function myPI()     { return MP ? MP.myPlayerIndex : 0; }
-function isMyTurn() { return !!(G.players && G.currentPlayer === myPI()); }
-function myPlayer() { return G.players ? G.players[myPI()] : null; }
+function isMyTurn() { if(MP?.isBoard) return false; return !!(G.players && G.currentPlayer === myPI()); }
+function myPlayer() { if(MP?.isBoard) return null; return G.players ? G.players[myPI()] : null; }
 function maxHandSize() { return MP?.config?.handSize || 5; }
 
 function genCode() {
@@ -1070,6 +1146,7 @@ async function showCreateRoom() {
   initHostColorPicker();
   const code=genCode();
   document.getElementById('host-room-code').textContent=code;
+  _updateQR(code);
   document.getElementById('cfg-no-disturbance').checked=false;
   document.getElementById('cfg-no-solution').checked=false;
   document.getElementById('cfg-auto-swipe').checked=false;
@@ -1100,7 +1177,7 @@ async function showCreateRoom() {
 
   // Live-sync name/config changes
   document.getElementById('host-mp-name').oninput=_debounce(updateHostPlayerEntry,400);
-  ['cfg-no-disturbance','cfg-no-solution','cfg-auto-swipe','cfg-hand-size','cfg-timer-on','cfg-timer-secs']
+  ['cfg-no-disturbance','cfg-no-solution','cfg-auto-swipe','cfg-hand-size','cfg-timer-on','cfg-timer-secs','cfg-extreme-mode','cfg-party-mode']
     .forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('change',_pushHostConfig); el.addEventListener('input',_pushHostConfig); });
 }
 function _debounce(fn,ms){ let t; return function(...a){clearTimeout(t);t=setTimeout(()=>fn.apply(this,a),ms);} }
@@ -1110,7 +1187,9 @@ function _getHostConfig() {
     disableSolution:document.getElementById('cfg-no-solution').checked,
     autoSwipe:document.getElementById('cfg-auto-swipe').checked,
     handSize:+document.getElementById('cfg-hand-size').value,
-    turnTimeLimitSecs:document.getElementById('cfg-timer-on').checked?+document.getElementById('cfg-timer-secs').value:0
+    turnTimeLimitSecs:document.getElementById('cfg-timer-on').checked?+document.getElementById('cfg-timer-secs').value:0,
+    extremeMode:document.getElementById('cfg-extreme-mode').checked,
+    partyMode:document.getElementById('cfg-party-mode').checked
   };
 }
 async function _pushHostConfig() {
@@ -1122,10 +1201,31 @@ function copyRoomLink() {
   if(!MP) return;
   const url=`${location.origin}${location.pathname}?join=${MP.roomCode}`;
   navigator.clipboard.writeText(url).then(()=>{
-    const btn=document.getElementById('copy-link-btn');
-    btn.textContent='✅ Copied!'; btn.classList.add('copied');
-    setTimeout(()=>{btn.textContent='📋 Copy invite link';btn.classList.remove('copied');},2200);
+    const code=document.getElementById('host-room-code');
+    code.classList.add('copied');
+    const orig=code.textContent;
+    code.textContent='✅ Copied!';
+    setTimeout(()=>{code.textContent=orig;code.classList.remove('copied');},2000);
   });
+}
+
+function _updateQR(code) {
+  const url=encodeURIComponent(`${location.origin}${location.pathname}?join=${code}`);
+  const img=document.getElementById('qr-img');
+  if(!img) return;
+  img.src=`https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=6&data=${url}`;
+  img.style.display='block';
+  const btn=document.getElementById('qr-toggle-btn');
+  if(btn) btn.textContent='Hide QR code';
+}
+
+function toggleQR() {
+  const img=document.getElementById('qr-img');
+  const btn=document.getElementById('qr-toggle-btn');
+  if(!img||!btn) return;
+  const hidden=img.style.display==='none';
+  img.style.display=hidden?'block':'none';
+  btn.textContent=hidden?'Hide QR code':'Show QR code';
 }
 
 function renderLobbyPlayers(playersObj,isHost) {
@@ -1215,6 +1315,8 @@ function _renderJoinSettings(cfg) {
   if(cfg.disableSolution) lines.push('✓ No solution cards');
   if(cfg.autoSwipe) lines.push('✓ Auto-swipe at start');
   if(cfg.turnTimeLimitSecs) lines.push(`⏱ Turn timer: ${cfg.turnTimeLimitSecs}s`);
+  if(cfg.extremeMode) lines.push('⚡ Extreme Mode');
+  if(cfg.partyMode) lines.push('🎮 Party Mode');
   el.innerHTML=lines.map(l=>`<div>${l}</div>`).join('');
 }
 
@@ -1259,21 +1361,24 @@ async function _onMPGameStart() {
   const playersRaw=roomData.players||{};
   const playerList=Object.entries(playersRaw)
     .sort(([,a],[,b])=>(a.isHost?-1:1)-(b.isHost?-1:1)||a.joinedAt-b.joinedAt)
-    .map(([uid,p])=>({uid,name:p.name,color:p.color}));
-  MP.myPlayerIndex=Math.max(0,playerList.findIndex(p=>p.uid===myUid()));
+    .map(([uid,p])=>({uid,name:p.name,color:p.color,isHost:!!p.isHost}));
+  MP.isBoard = !!(roomData.config?.partyMode && MP.isHost);
+  const gamePlayers = roomData.config?.partyMode ? playerList.filter(p=>!p.isHost) : playerList;
+  MP.myPlayerIndex = MP.isBoard ? -1 : Math.max(0,gamePlayers.findIndex(p=>p.uid===myUid()));
 
-  // Random picker and first player, seeded by host
-  const pickerIdx=Math.floor((roomData.meta.routePickerRng||0)*playerList.length)%playerList.length;
-  MP.amPicker=playerList[pickerIdx]?.uid===myUid();
-  MP.routePickerName=playerList[pickerIdx]?.name||'Someone';
-  MP.firstPlayerIdx=Math.floor((roomData.meta.firstPlayerRng||0)*playerList.length)%playerList.length;
+  // Random picker and first player from gamePlayers (not host in party mode)
+  const pickerPool = gamePlayers.length > 0 ? gamePlayers : playerList;
+  const pickerIdx=Math.floor((roomData.meta.routePickerRng||0)*pickerPool.length)%pickerPool.length;
+  MP.amPicker=!MP.isBoard && pickerPool[pickerIdx]?.uid===myUid();
+  MP.routePickerName=pickerPool[pickerIdx]?.name||'Someone';
+  MP.firstPlayerIdx=Math.floor((roomData.meta.firstPlayerRng||0)*pickerPool.length)%pickerPool.length;
 
   mpOff();
   showScreen('game');
   ['bottom-wrap','game-panel','bottom-left-ctrls'].forEach(id=>document.getElementById(id).classList.add('ui-hidden'));
   const chatSection=document.getElementById('mp-chat-section'); if(chatSection) chatSection.style.display='';
   await buildSVGMap();
-  _attachMPListeners(roomCode,playerList,roomData.config);
+  _attachMPListeners(roomCode,gamePlayers,roomData.config);
 
   if(MP.amPicker) {
     MP._routeDeck=shuffle([...ROUTE_CARDS]);
@@ -1290,7 +1395,8 @@ function _attachMPListeners(roomCode,playerList,config) {
   mpOn(db.ref(`rooms/${roomCode}/routeConfirmed`),'value',async snap=>{
     const confirmed=snap.val()||{};
     const mrcStatus=document.getElementById('mrc-status');
-    const done=Object.values(confirmed).filter(Boolean).length;
+    // In party mode playerList is guests only, so count confirmations only from those UIDs
+    const done=playerList.filter(p=>confirmed[p.uid]).length;
     if(mrcStatus) mrcStatus.textContent=`${done} / ${playerList.length} confirmed`;
     if(MP.isHost && playerList.every(p=>confirmed[p.uid]))
       await db.ref(`rooms/${roomCode}/meta/state`).set('playing');
@@ -1396,17 +1502,27 @@ async function _startMPPlayPhase(roomCode,playerList,config) {
     station:config.autoSwipe?routeObj.startStation:'New Jersey',
     line:config.autoSwipe?(linesAt(routeObj.startStation).filter(l=>LINES[l]&&!isBus(l))[0]||null):null,
     dir:1,hand:[],metrocardPlayed:!!config.autoSwipe,turnsWaited:0,skipMove:false});
+  // In party mode, host is board-only — playerList already excludes them (filtered in _onMPGameStart)
   const players=playerList.map(p=>mkP(p.name,p.color));
   const discard=[deck.pop()];
-  G={players,deck,discard,route:routeObj,currentPlayer:MP?.firstPlayerIdx||0,disturbances:{},log:[]};
+  G={players,deck,discard,route:routeObj,currentPlayer:MP?.firstPlayerIdx||0,disturbances:{},log:[],
+     lastDisturbance:null,lastSolution:null,lastTransfer:null,
+     extremeMode:!!config.extremeMode,extremeChance:0.30,totalTurns:0};
   drawnThisTurn=false; selectedCard=null; _lastLogLen=-1; _lastLogTail=''; _lastHandKey=''; _svgBoardRects=null;
   const hs=config.handSize||5;
   for(let i=0;i<hs;i++) players.forEach(p=>{if(G.deck.length)p.hand.push(G.deck.pop());});
   document.getElementById('route-wait-overlay').classList.add('hidden');
   document.getElementById('mp-route-confirm').classList.add('hidden');
+
+  // Apply party mode CSS classes before animation
+  const gameScreen=document.getElementById('game-screen');
+  if(config.partyMode) {
+    gameScreen.classList.add(MP.isBoard ? 'party-board' : 'party-controller');
+  }
+
   await _mpMapAnimation();
   // Create floating route card in top-right corner (matches solo intro behavior)
-  {
+  if(!MP.isBoard) {
     const cardW=180, cardH=Math.round(180*(124/90));
     const smallW=Math.round(cardW*0.6), smallH=Math.round(cardH*0.6);
     if(_introFlyCard) { _introFlyCard.remove(); _introFlyCard=null; }
@@ -1417,9 +1533,16 @@ async function _startMPPlayPhase(roomCode,playerList,config) {
     document.body.appendChild(rfw);
     _introFlyCard=rfw;
   }
-  ['bottom-wrap','game-panel','bottom-left-ctrls'].forEach((id,i)=>{
-    setTimeout(()=>document.getElementById(id).classList.remove('ui-hidden'),i*130);
-  });
+  if(MP.isBoard) {
+    // Board shows map only — no hand strip needed
+    ['game-panel','bottom-left-ctrls'].forEach((id,i)=>{
+      setTimeout(()=>document.getElementById(id).classList.remove('ui-hidden'),i*130);
+    });
+  } else {
+    ['bottom-wrap','game-panel','bottom-left-ctrls'].forEach((id,i)=>{
+      setTimeout(()=>document.getElementById(id).classList.remove('ui-hidden'),i*130);
+    });
+  }
   renderAll(); updateTurnGlow();
   if(isMyTurn()){showYourTurnBanner();startTurnTimer();}
   addLog(`🚇 ${routeObj.startLabel} → ${routeObj.endLabel}`,'hl');
@@ -2051,7 +2174,7 @@ function initGame(playerName, color, opponents, config) {
   ];
   // Don't deal cards here — intro animation deals them
   const discard = [deck.pop()];
-  G = {players,deck,discard,route,currentPlayer:0,disturbances:{},log:[],startTime:Date.now(),lastDisturbance:null,lastSolution:null,lastTransfer:null,extremeMode:!!cfg.extremeMode,totalTurns:0};
+  G = {players,deck,discard,route,currentPlayer:0,disturbances:{},log:[],startTime:Date.now(),lastDisturbance:null,lastSolution:null,lastTransfer:null,extremeMode:!!cfg.extremeMode,extremeChance:0.30,totalTurns:0};
   drawnThisTurn = false; selectedCard = null;
 }
 
@@ -2417,6 +2540,7 @@ function renderPlayers() {
 
 let _lastHandKey = '';
 function renderHand() {
+  if(MP?.isBoard) return;
   const p = myPlayer() || G.players[0];
   const key = p.hand.map(c=>c.label).join(',') + '|' + (selectedCard?.label||'') + '|' + isMyTurn() + '|' + drawnThisTurn;
   if(key === _lastHandKey) return;
@@ -2492,6 +2616,14 @@ function renderDeck() {
   const wrap = document.getElementById('bp-disc-icon');
   if(wrap && top) wrap.innerHTML=`<img class="bp-top-img" src="${top.img}" onerror="this.style.display='none'">`;
   else if(wrap && !top) wrap.textContent='↩';
+  // Mirror to party controller piles
+  const pctDeck = document.getElementById('pct-deck-count');
+  if(pctDeck) pctDeck.textContent = G.deck.length;
+  const pctDisc = document.getElementById('pct-disc-preview');
+  if(pctDisc) {
+    if(top?.img) pctDisc.innerHTML=`<img src="${top.img}" onerror="this.style.display='none'">`;
+    else pctDisc.textContent='↩';
+  }
 }
 
 function renderRoute() {
@@ -2559,7 +2691,58 @@ function renderAll() {
     renderDisturbances();
     renderLog();
     updateUI();
+    renderPartyViews();
   });
+}
+
+function renderPartyViews() {
+  if(!MP?.config?.partyMode) return;
+  const cp = G.players?.[G.currentPlayer];
+  const isMyTurnNow = isMyTurn();
+
+  // Board indicator (host)
+  const pbiLabel = document.getElementById('pbi-label');
+  const pbiDot = document.getElementById('pbi-dot');
+  if(pbiLabel && cp) {
+    pbiLabel.textContent = `${cp.name}'s turn`;
+    if(pbiDot) pbiDot.style.background = cp.color;
+  }
+
+  if(MP.isBoard) return; // board uses existing map rendering
+
+  // Controller header (guests)
+  const pctStart = document.getElementById('pct-start');
+  const pctEnd = document.getElementById('pct-end');
+  if(pctStart && G.route) pctStart.textContent = G.route.startLabel;
+  if(pctEnd && G.route) pctEnd.textContent = G.route.endLabel;
+
+  const turnLabel = document.getElementById('pct-turn-label');
+  if(turnLabel) {
+    if(isMyTurnNow) {
+      turnLabel.textContent = drawnThisTurn ? 'Your turn — play or discard' : 'Your turn — draw a card!';
+      turnLabel.style.color = '#FCCC0A';
+    } else {
+      turnLabel.textContent = cp ? `Waiting for ${cp.name}…` : 'Waiting…';
+      turnLabel.style.color = '#666';
+    }
+  }
+
+  // Disturbance badges
+  const pctDist = document.getElementById('pct-disturbances');
+  if(pctDist) {
+    pctDist.innerHTML = Object.entries(G.disturbances||{}).map(([line,d])=>{
+      const m = LINE_META[line]||{color:'#555',text:'#fff'};
+      const icon = d.type==='breakdown'?'🔧':d.type==='medical'?'🚑':'⏱';
+      return `<span class="line-badge" style="background:${m.color};color:${m.text};font-size:11px;padding:2px 7px;border-radius:4px" title="${d.type}">${icon} ${line}</span>`;
+    }).join('');
+  }
+
+  // Pile opacity for controller
+  const pctDeckEl = document.querySelector('.pct-pile');
+  if(pctDeckEl) pctDeckEl.style.opacity = (!isMyTurnNow||drawnThisTurn) ? '.45':'1';
+  const piles = document.querySelectorAll('.pct-pile');
+  if(piles[0]) piles[0].style.opacity = (!isMyTurnNow||drawnThisTurn)?'.45':'1';
+  if(piles[1]) piles[1].style.opacity = (!isMyTurnNow||drawnThisTurn||!G.discard?.length)?'.45':'1';
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2669,7 +2852,8 @@ async function drawFromDeck() {
   drawnThisTurn = true;
   renderDeck(); updateUI();
   snd('dealing');
-  await flyActionCard({card, fromRect:rectOf('.bp-deck'), toRect:rectOf('#hand-inner'), toScale:1, faceDown:true});
+  const isCtrl = MP?.config?.partyMode && !MP?.isBoard;
+  if(!isCtrl) await flyActionCard({card, fromRect:rectOf('.bp-deck'), toRect:rectOf('#hand-inner'), toScale:1, faceDown:true});
   myPlayer().hand.push(card);
   myPlayer().drawn = (myPlayer().drawn||0) + 1;
   addLog('You drew a card.');
@@ -2682,7 +2866,8 @@ async function drawFromDiscard() {
   drawnThisTurn = true;
   renderDeck(); updateUI();
   snd('draw');
-  await flyActionCard({card, fromRect:rectOf('.bp-disc'), toRect:rectOf('#hand-inner'), toScale:1, faceDown:false});
+  const isCtrl = MP?.config?.partyMode && !MP?.isBoard;
+  if(!isCtrl) await flyActionCard({card, fromRect:rectOf('.bp-disc'), toRect:rectOf('#hand-inner'), toScale:1, faceDown:false});
   myPlayer().hand.push(card);
   myPlayer().drawn = (myPlayer().drawn||0) + 1;
   addLog(`You took the discard: <b>${card.label}</b>`);
@@ -2695,7 +2880,8 @@ async function seedDiscardIfEmpty() {
   if(G.discard.length > 0 || G.deck.length === 0) return;
   const card = G.deck.pop();
   renderDeck();
-  await flyActionCard({card, fromRect:rectOf('.bp-deck'), toRect:rectOf('.bp-disc'), toScale:0.4, faceDown:true});
+  const isCtrl = MP?.config?.partyMode && !MP?.isBoard;
+  if(!isCtrl) await flyActionCard({card, fromRect:rectOf('.bp-deck'), toRect:rectOf('.bp-disc'), toScale:0.4, faceDown:true});
   G.discard.push(card);
   renderDeck();
 }
@@ -3190,32 +3376,43 @@ function showYourTurnBanner() {
   }, 400);
 }
 
-function endTurn() {
+async function endTurn() {
   drawnThisTurn=false; selectedCard=null; _lastLogLen=-1; _lastLogTail=''; _lastHandKey=''; _svgBoardRects=null;
   stopTurnTimer();
   seedDiscardIfEmpty(); // keep discard visible; seeds from deck if empty
   G.currentPlayer=(G.currentPlayer+1)%G.players.length;
-  if(!MP && G.extremeMode) {
+
+  // Extreme mode: every 2nd turn, roll for a random disturbance with escalating probability
+  let _extremeEvent=null;
+  if(G.extremeMode && !MP?.isBoard) {
     G.totalTurns=(G.totalTurns||0)+1;
     if(G.totalTurns%2===0) {
       const available=Object.keys(LINES).filter(l=>!G.disturbances[l]&&!isBus(l));
       if(available.length>0) {
-        const target=available[Math.floor(Math.random()*available.length)];
-        const dtype=['breakdown','medical','delay'][Math.floor(Math.random()*3)];
-        G.disturbances[target]={type:dtype,by:'System'};
-        G.lastDisturbance={line:target,type:dtype,by:'System',ts:Date.now()};
-        if(dtype==='medical') G.players.filter(p=>p.line===target).forEach(p=>p.skipMove=true);
-        renderDisturbances();
-        addLog(`⚠️ System: ${dtype} on ${lb(target)} line!`,'bad');
+        const chance = G.extremeChance ?? 0.30;
+        if(Math.random() < chance) {
+          G.extremeChance = Math.min(0.95, chance+0.05);
+          const target=available[Math.floor(Math.random()*available.length)];
+          const dtype=['breakdown','medical','delay'][Math.floor(Math.random()*3)];
+          G.disturbances[target]={type:dtype,by:'System'};
+          G.lastDisturbance={line:target,type:dtype,by:'System',ts:Date.now()};
+          if(dtype==='medical') G.players.filter(p=>p.line===target).forEach(p=>p.skipMove=true);
+          addLog(`⚡ Extreme: ${dtype} on ${lb(target)} line!`,'bad');
+          _extremeEvent={target,dtype};
+        }
       }
     }
   }
+
   renderAll();
+  renderDisturbances();
   updateTurnGlow();
   if(MP) {
-    syncGameState();
+    syncGameState(); // broadcasts to all; others see disturbance reveal via listener
+    if(isMyTurn()){showYourTurnBanner();startTurnTimer();}
     // In MP there are no AI players — next player's client will take over
   } else {
+    if(_extremeEvent) await showDisturbanceReveal(null,{name:'System'},_extremeEvent.target,_extremeEvent.dtype);
     if(isMyTurn()) showYourTurnBanner();
     if(G.players[G.currentPlayer].isAI) setTimeout(runAI, 850);
   }
